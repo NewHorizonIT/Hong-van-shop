@@ -1,0 +1,211 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//////////////////////////////
+// ENUMS
+//////////////////////////////
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  DONE
+  CANCELLED
+}
+
+//////////////////////////////
+// USERS
+//////////////////////////////
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(STAFF)
+  isActive     Boolean  @default(true) @map("is_active")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  orders       Order[]
+  imports      InventoryImport[]
+
+  @@map("users")
+}
+
+//////////////////////////////
+// CATEGORIES
+//////////////////////////////
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  isActive  Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  products  Product[]
+
+  @@map("categories")
+}
+
+//////////////////////////////
+// PRODUCTS
+//////////////////////////////
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+
+  categoryId  String   @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  variants    ProductVariant[]
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+//////////////////////////////
+// PRODUCT VARIANTS
+//////////////////////////////
+
+model ProductVariant {
+  id            String   @id @default(uuid())
+  name          String
+  costPrice     Decimal  @db.Decimal(12,2) @map("cost_price")
+  sellingPrice  Decimal  @db.Decimal(12,2) @map("selling_price")
+  stockQuantity Int      @default(0) @map("stock_quantity")
+  isActive      Boolean  @default(true) @map("is_active")
+
+  productId     String   @map("product_id")
+  product       Product  @relation(fields: [productId], references: [id])
+  unit          String   @default("phần")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  orderItems    OrderItem[]
+  imports       InventoryImport[]
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+//////////////////////////////
+// INVENTORY IMPORTS
+//////////////////////////////
+
+model InventoryImport {
+  id                String   @id @default(uuid())
+  quantity          Int
+  importPrice       Decimal  @db.Decimal(12,2) @map("import_price")
+  importDate        DateTime @default(now()) @map("import_date")
+
+  productVariantId  String   @map("product_variant_id")
+  productVariant    ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  createdById       String   @map("created_by")
+  createdBy         User     @relation(fields: [createdById], references: [id])
+
+  @@index([productVariantId])
+  @@index([importDate])
+  @@map("inventory_imports")
+}
+
+//////////////////////////////
+// ORDERS
+//////////////////////////////
+
+model Order {
+  id            String      @id @default(uuid())
+
+  customerName  String      @map("customer_name")
+  phone         String
+  address       String
+  deliveryTime  DateTime    @map("delivery_time")
+
+  status        OrderStatus @default(PENDING)
+
+  totalAmount   Decimal     @db.Decimal(14,2) @map("total_amount")
+  totalCost     Decimal     @db.Decimal(14,2) @map("total_cost")
+  totalProfit   Decimal     @db.Decimal(14,2) @map("total_profit")
+
+  createdById   String      @map("created_by")
+  createdBy     User        @relation(fields: [createdById], references: [id])
+  
+  customerId    String?     @map("customer_id")
+  customer      Customer?   @relation(fields: [customerId], references: [id])
+  
+  note        String?
+  discount    Decimal   @default(0) @db.Decimal(12,2)
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  items         OrderItem[]
+
+  @@index([createdAt])
+  @@index([deliveryTime])
+  @@index([status])
+  @@index([customerId])
+  @@map("orders")
+}
+
+//////////////////////////////
+// ORDER ITEMS
+//////////////////////////////
+
+model OrderItem {
+  id                String   @id @default(uuid())
+  quantity          Int
+
+  unitPrice         Decimal  @db.Decimal(12,2) @map("unit_price")
+  costPrice         Decimal  @db.Decimal(12,2) @map("cost_price")
+  subtotal          Decimal  @db.Decimal(14,2)
+
+  orderId           String   @map("order_id")
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productVariantId  String   @map("product_variant_id")
+  productVariant    ProductVariant @relation(fields: [productVariantId], references: [id])
+
+  @@index([orderId])
+  @@index([productVariantId])
+  @@map("order_items")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String   @unique
+  address   String?
+  note      String?
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  orders    Order[]
+  
+  @@map("customers")
+}
