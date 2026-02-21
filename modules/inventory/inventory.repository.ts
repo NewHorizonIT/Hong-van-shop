@@ -51,7 +51,10 @@ export const inventoryRepository = {
       prisma.inventoryImport.count({ where }),
     ]);
 
-    return { imports, total };
+    // Filter out imports with null ingredients
+    const filteredImports = imports.filter((imp) => imp.ingredient !== null);
+
+    return { imports: filteredImports, total };
   },
 
   async findById(id: string) {
