@@ -318,15 +318,17 @@ class ExportService {
 
     const workbook = XLSX.utils.book_new();
 
-    const importsData = imports.map((imp) => ({
-      "Nguyên liệu": imp.ingredient.name,
-      "Đơn vị": imp.ingredient.unit,
-      "Số lượng": Number(imp.quantity),
-      "Giá nhập": imp.importPrice.toNumber(),
-      "Thành tiền": Number(imp.totalPrice),
-      "Ngày nhập": new Date(imp.importDate).toLocaleDateString("vi-VN"),
-      "Người nhập": imp.createdBy?.name || "",
-    }));
+    const importsData = imports
+      .filter((imp) => imp.ingredient !== null)
+      .map((imp) => ({
+        "Nguyên liệu": imp.ingredient!.name,
+        "Đơn vị": imp.ingredient!.unit,
+        "Số lượng": Number(imp.quantity),
+        "Giá nhập": imp.importPrice.toNumber(),
+        "Thành tiền": Number(imp.totalPrice),
+        "Ngày nhập": new Date(imp.importDate).toLocaleDateString("vi-VN"),
+        "Người nhập": imp.createdBy?.name || "",
+      }));
 
     const sheet = XLSX.utils.json_to_sheet(importsData);
     sheet["!cols"] = [
