@@ -36,6 +36,7 @@ export interface UpdateProductInput {
   description?: string;
   categoryId?: string;
   isActive?: boolean;
+  variants?: (CreateVariantInput & { id?: string })[];
 }
 
 export interface CreateVariantInput {

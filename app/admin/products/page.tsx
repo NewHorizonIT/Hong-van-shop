@@ -1,12 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import ProductCard, { ProductWithDetails } from "@/components/common/product-card";
+import ProductCard, {
+  ProductWithDetails,
+} from "@/components/common/product-card";
 import ProductModal from "@/components/modal/product-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "@/hooks/api/use-products";
+import {
+  useProducts,
+  useCreateProduct,
+  useUpdateProduct,
+  useDeleteProduct,
+} from "@/hooks/api/use-products";
 import { useCategories } from "@/hooks/api/use-categories";
 import { useToast } from "@/hooks/use-toast";
 import { CreateProductInput, UpdateProductInput } from "@/types/product";
@@ -25,41 +32,46 @@ import { apiClient } from "@/lib/api-client";
 
 export default function ProductsPage() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
-  const [editProduct, setEditProduct] = useState<ProductWithDetails | null>(null);
-  const [deleteProduct, setDeleteProduct] = useState<ProductWithDetails | null>(null);
+  const [editProduct, setEditProduct] = useState<ProductWithDetails | null>(
+    null,
+  );
+  const [deleteProduct, setDeleteProduct] = useState<ProductWithDetails | null>(
+    null,
+  );
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { toast } = useToast();
-  const { data: products, isLoading: productsLoading, error: productsError, mutate: mutateProducts } = useProducts(
-    selectedCategory || undefined
-  );
+  const {
+    data: products,
+    isLoading: productsLoading,
+    error: productsError,
+    mutate: mutateProducts,
+  } = useProducts(selectedCategory || undefined);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
-  
+
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProductFn = useDeleteProduct();
 
   // Filter products by search term
   const filteredProducts = products?.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleSave = async (data: CreateProductInput & { id?: string }) => {
     setIsSubmitting(true);
     try {
       if (data.id) {
-        // Update existing product
+        // Update existing product with variants
         const updateData: UpdateProductInput = {
           name: data.name,
           description: data.description,
           categoryId: data.categoryId,
+          variants: data.variants,
         };
         await updateProduct(data.id, updateData);
-        
-        // Update variants separately if needed
-        // Note: In a real app, you'd want to handle variant updates more carefully
         toast({
           title: "Thành công",
           description: "Sản phẩm đã được cập nhật",
@@ -91,7 +103,7 @@ export default function ProductsPage() {
 
   const confirmDelete = async () => {
     if (!deleteProduct) return;
-    
+
     try {
       await deleteProductFn(deleteProduct.id);
       toast({
@@ -101,7 +113,8 @@ export default function ProductsPage() {
     } catch (error) {
       toast({
         title: "Lỗi",
-        description: error instanceof Error ? error.message : "Không thể xóa sản phẩm",
+        description:
+          error instanceof Error ? error.message : "Không thể xóa sản phẩm",
         variant: "destructive",
       });
     } finally {
@@ -117,7 +130,9 @@ export default function ProductsPage() {
       mutateProducts();
       toast({
         title: "Thành công",
-        description: product.isActive ? "Sản phẩm đã ngừng bán" : "Sản phẩm đã được kích hoạt",
+        description: product.isActive
+          ? "Sản phẩm đã ngừng bán"
+          : "Sản phẩm đã được kích hoạt",
       });
     } catch (error) {
       toast({
@@ -144,7 +159,9 @@ export default function ProductsPage() {
         <div className="text-center text-destructive">
           <p>Không thể tải danh sách sản phẩm</p>
           <p className="text-sm text-muted-foreground">
-            {productsError instanceof Error ? productsError.message : "Vui lòng thử lại sau"}
+            {productsError instanceof Error
+              ? productsError.message
+              : "Vui lòng thử lại sau"}
           </p>
         </div>
       </div>
@@ -236,18 +253,24 @@ export default function ProductsPage() {
       />
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deleteProduct} onOpenChange={() => setDeleteProduct(null)}>
+      <AlertDialog
+        open={!!deleteProduct}
+        onOpenChange={() => setDeleteProduct(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Xác nhận xóa sản phẩm?</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa sản phẩm &quot;{deleteProduct?.name}&quot;? 
-              Hành động này không thể hoàn tác.
+              Bạn có chắc chắn muốn xóa sản phẩm &quot;{deleteProduct?.name}
+              &quot;? Hành động này không thể hoàn tác.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Hủy</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Xóa
             </AlertDialogAction>
           </AlertDialogFooter>

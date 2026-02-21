@@ -165,11 +165,14 @@ export default function ProductModal({
 
     if (!validate()) return;
 
-    const variantsData: CreateVariantInput[] = variants.map((v) => ({
-      name: v.name.trim(),
-      sellingPrice: Number(v.sellingPrice),
-      unit: v.unit,
-    }));
+    const variantsData: (CreateVariantInput & { id?: string })[] = variants.map(
+      (v) => ({
+        ...(v.id && { id: v.id }),
+        name: v.name.trim(),
+        sellingPrice: Number(v.sellingPrice),
+        unit: v.unit,
+      }),
+    );
 
     onSave({
       ...(product?.id && { id: product.id }),

@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/prisma";
-import { CreateVariantInput, UpdateVariantInput } from "./product.schema";
+import {
+  CreateVariantInput,
+  UpdateVariantInput,
+  UpdateProductInput,
+} from "./product.schema";
+import { ValidationException } from "@/modules/common/api-error";
 
 export interface ProductFilter {
   search?: string;
@@ -82,6 +87,7 @@ export const productRepository = {
             unit: true,
             sellingPrice: true,
             isActive: true,
+            productId: true,
             createdAt: true,
           },
           orderBy: { createdAt: "asc" },
@@ -129,6 +135,7 @@ export const productRepository = {
             unit: true,
             sellingPrice: true,
             isActive: true,
+            productId: true,
             createdAt: true,
           },
         },
@@ -138,40 +145,109 @@ export const productRepository = {
     });
   },
 
-  async update(
-    id: string,
-    data: {
-      name?: string;
-      description?: string | null;
-      categoryId?: string;
-      isActive?: boolean;
-    },
-  ) {
-    return prisma.product.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        isActive: true,
-        categoryId: true,
-        category: {
-          select: { id: true, name: true },
-        },
-        variants: {
-          select: {
-            id: true,
-            name: true,
-            unit: true,
-            sellingPrice: true,
-            isActive: true,
-            createdAt: true,
+  async update(id: string, data: UpdateProductInput) {
+    const { variants, ...productData } = data;
+
+    return prisma.$transaction(async (tx) => {
+      // Ensure product exists and update product fields if provided
+      if (Object.keys(productData).length > 0) {
+        await tx.product.update({ where: { id }, data: productData });
+      } else {
+        const exists = await tx.product.findUnique({
+          where: { id },
+          select: { id: true },
+        });
+        if (!exists) {
+          throw new Error("Product not found");
+        }
+      }
+
+      if (variants) {
+        // Existing variants for the product
+        const existing = await tx.productVariant.findMany({
+          where: { productId: id },
+          select: { id: true },
+        });
+        const existingIds = existing.map((e) => e.id);
+
+        const incomingIds = variants
+          .filter((v) => v.id)
+          .map((v) => v.id as string);
+        const toDelete = existingIds.filter(
+          (eid) => !incomingIds.includes(eid),
+        );
+
+        // Check orders before deleting variants
+        for (const delId of toDelete) {
+          const count = await tx.orderItem.count({
+            where: { productVariantId: delId },
+          });
+          if (count > 0) {
+            throw new ValidationException(
+              "Cannot delete variant with existing orders",
+            );
+          }
+        }
+
+        if (toDelete.length > 0) {
+          await tx.productVariant.deleteMany({
+            where: { id: { in: toDelete } },
+          });
+        }
+
+        // Upsert incoming variants (update if id provided, create otherwise)
+        for (const v of variants) {
+          if (v.id) {
+            await tx.productVariant.update({
+              where: { id: v.id },
+              data: {
+                name: v.name,
+                unit: v.unit || "phần",
+                sellingPrice: v.sellingPrice,
+              },
+            });
+          } else {
+            await tx.productVariant.create({
+              data: {
+                productId: id,
+                name: v.name,
+                unit: v.unit || "phần",
+                sellingPrice: v.sellingPrice,
+                isActive: true,
+              },
+            });
+          }
+        }
+      }
+
+      // Return updated product with variants
+      return tx.product.findUniqueOrThrow({
+        where: { id },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          isActive: true,
+          categoryId: true,
+          category: {
+            select: { id: true, name: true },
           },
+          variants: {
+            select: {
+              id: true,
+              productId: true,
+              name: true,
+              unit: true,
+              sellingPrice: true,
+              isActive: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: "asc" },
+          },
+          createdAt: true,
+          updatedAt: true,
         },
-        createdAt: true,
-        updatedAt: true,
-      },
+      });
     });
   },
 
@@ -218,6 +294,7 @@ export const productRepository = {
         unit: true,
         sellingPrice: true,
         isActive: true,
+        productId: true,
         createdAt: true,
       },
     });
@@ -233,6 +310,7 @@ export const productRepository = {
         unit: true,
         sellingPrice: true,
         isActive: true,
+        productId: true,
         createdAt: true,
       },
     });

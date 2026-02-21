@@ -27,6 +27,16 @@ export const updateProductSchema = z.object({
   description: z.string().max(1000).optional().nullable(),
   categoryId: z.string().uuid().optional(),
   isActive: z.boolean().optional(),
+  variants: z
+    .array(
+      z.object({
+        id: z.string().uuid().optional(),
+        name: z.string().min(1).max(100),
+        unit: z.string().min(1).max(50).optional(),
+        sellingPrice: z.coerce.number().min(0),
+      }),
+    )
+    .optional(),
 });
 
 export const productQuerySchema = z.object({

@@ -141,8 +141,8 @@ model InventoryImport {
   importDate    DateTime @default(now()) @map("import_date")
   note          String?
 
-  ingredientId  String   @map("ingredient_id")
-  ingredient    Ingredient @relation(fields: [ingredientId], references: [id])
+  ingredientId  String?   @map("ingredient_id")
+  ingredient    Ingredient? @relation(fields: [ingredientId], references: [id])
 
   createdById   String   @map("created_by")
   createdBy     User     @relation(fields: [createdById], references: [id])
