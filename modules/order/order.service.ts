@@ -13,10 +13,10 @@ import {
 
 export const orderService = {
   async findAll(query: OrderQueryInput): Promise<OrderListResponse> {
-    const { page, limit, search, status, from, to } = query;
+    const { page, limit, search, status, from, to, sortBy, sortOrder } = query;
 
     const { orders, total } = await orderRepository.findAll(
-      { search, status, from, to },
+      { search, status, from, to, sortBy, sortOrder },
       page,
       limit,
     );
@@ -71,22 +71,19 @@ export const orderService = {
 
     // Calculate totals
     let totalAmount = 0;
-    let totalCost = 0;
 
     const orderItems = input.items.map((item) => {
       const variant = variantMap.get(item.productVariantId)!;
       const unitPrice = Number(variant.sellingPrice);
-      const costPrice = Number(variant.costPrice);
       const subtotal = unitPrice * item.quantity;
 
       totalAmount += subtotal;
-      totalCost += costPrice * item.quantity;
 
       return {
         productVariantId: item.productVariantId,
         quantity: item.quantity,
         unitPrice,
-        costPrice,
+        costPrice: 0, // Cost tracking moved to ingredients
         subtotal,
       };
     });
@@ -94,7 +91,8 @@ export const orderService = {
     // Apply discount
     const discount = input.discount || 0;
     totalAmount -= discount;
-    const totalProfit = totalAmount - totalCost;
+    const totalCost = 0; // Cost tracking moved to ingredients
+    const totalProfit = totalAmount; // Profit = revenue when cost is tracked separately
 
     return orderRepository.create(
       {

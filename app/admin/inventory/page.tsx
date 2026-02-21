@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -43,7 +44,7 @@ import {
   useCreateInventoryImport,
   useDeleteInventoryImport,
 } from "@/hooks/api/use-inventory";
-import { useProducts } from "@/hooks/api/use-products";
+import { useActiveIngredients } from "@/hooks/api/use-ingredients";
 import { useToast } from "@/hooks/use-toast";
 import { InventoryImport, CreateInventoryImportInput } from "@/types/inventory";
 import { Plus, Trash2, Package, DollarSign, TrendingUp } from "lucide-react";
@@ -51,15 +52,15 @@ import { Plus, Trash2, Package, DollarSign, TrendingUp } from "lucide-react";
 export default function InventoryImportsPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteImport, setDeleteImport] = useState<InventoryImport | null>(
-    null,
+    null
   );
-  const [selectedProductId, setSelectedProductId] = useState<string>("");
-  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
+  const [selectedIngredientId, setSelectedIngredientId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     quantity: 1,
     importPrice: 0,
     importDate: new Date().toISOString().slice(0, 16),
+    note: "",
   });
 
   const { toast } = useToast();
@@ -70,7 +71,8 @@ export default function InventoryImportsPage() {
     isLoading: importsLoading,
     error: importsError,
   } = useInventoryImports();
-  const { data: products, isLoading: productsLoading } = useProducts();
+  const { data: ingredients, isLoading: ingredientsLoading } =
+    useActiveIngredients();
 
   // Calculate stats from imports data
   const stats = useMemo(() => {
@@ -86,8 +88,8 @@ export default function InventoryImportsPage() {
     let totalCost = 0;
 
     imports.forEach((imp) => {
-      totalQuantity += imp.quantity;
-      totalCost += Number(imp.importPrice) * imp.quantity;
+      totalQuantity += Number(imp.quantity);
+      totalCost += Number(imp.totalPrice);
     });
 
     return {
@@ -117,28 +119,23 @@ export default function InventoryImportsPage() {
     });
   };
 
-  const getVariantsForProduct = (productId: string) => {
-    const product = products?.find((p) => p.id === productId);
-    return product?.variants || [];
-  };
-
   const resetForm = () => {
-    setSelectedProductId("");
-    setSelectedVariantId("");
+    setSelectedIngredientId("");
     setFormData({
       quantity: 1,
       importPrice: 0,
       importDate: new Date().toISOString().slice(0, 16),
+      note: "",
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedVariantId) {
+    if (!selectedIngredientId) {
       toast({
         title: "Lỗi",
-        description: "Vui lòng chọn sản phẩm và loại",
+        description: "Vui lòng chọn nguyên liệu",
         variant: "destructive",
       });
       return;
@@ -147,10 +144,11 @@ export default function InventoryImportsPage() {
     setIsSubmitting(true);
     try {
       const data: CreateInventoryImportInput = {
-        productVariantId: selectedVariantId,
+        ingredientId: selectedIngredientId,
         quantity: formData.quantity,
         importPrice: formData.importPrice,
         importDate: new Date(formData.importDate).toISOString(),
+        note: formData.note || undefined,
       };
 
       await createImport(data);
@@ -205,9 +203,9 @@ export default function InventoryImportsPage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">Nhập hàng</h1>
+          <h1 className="text-2xl font-bold">Nhập nguyên liệu</h1>
           <p className="text-muted-foreground">
-            Quản lý nhập hàng và theo dõi chi phí
+            Quản lý nhập nguyên liệu và theo dõi chi phí
           </p>
         </div>
         <Button onClick={() => setOpenDialog(true)}>
@@ -236,7 +234,9 @@ export default function InventoryImportsPage() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalQuantity}</div>
+            <div className="text-2xl font-bold">
+              {stats.totalQuantity.toFixed(2)}
+            </div>
           </CardContent>
         </Card>
 
@@ -276,11 +276,11 @@ export default function InventoryImportsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Ngày nhập</TableHead>
-                  <TableHead>Sản phẩm</TableHead>
-                  <TableHead>Loại</TableHead>
+                  <TableHead>Nguyên liệu</TableHead>
                   <TableHead className="text-right">Số lượng</TableHead>
                   <TableHead className="text-right">Giá nhập/đơn vị</TableHead>
                   <TableHead className="text-right">Tổng tiền</TableHead>
+                  <TableHead>Ghi chú</TableHead>
                   <TableHead>Người nhập</TableHead>
                   <TableHead className="w-16"></TableHead>
                 </TableRow>
@@ -290,17 +290,19 @@ export default function InventoryImportsPage() {
                   <TableRow key={imp.id}>
                     <TableCell>{formatDate(imp.importDate)}</TableCell>
                     <TableCell className="font-medium">
-                      {imp.productVariant.product.name}
+                      {imp.ingredient.name} ({imp.ingredient.unit})
                     </TableCell>
-                    <TableCell>
-                      {imp.productVariant.name} ({imp.productVariant.unit})
+                    <TableCell className="text-right">
+                      {Number(imp.quantity).toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-right">{imp.quantity}</TableCell>
                     <TableCell className="text-right">
                       {formatPrice(Number(imp.importPrice))}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {formatPrice(Number(imp.importPrice) * imp.quantity)}
+                      {formatPrice(Number(imp.totalPrice))}
+                    </TableCell>
+                    <TableCell className="max-w-32 truncate">
+                      {imp.note || "-"}
                     </TableCell>
                     <TableCell>{imp.createdBy.name}</TableCell>
                     <TableCell>
@@ -327,47 +329,24 @@ export default function InventoryImportsPage() {
           <DialogHeader>
             <DialogTitle>Nhập hàng mới</DialogTitle>
             <DialogDescription>
-              Nhập thông tin hàng hóa cần nhập kho
+              Nhập thông tin nguyên liệu cần nhập kho
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="product">Sản phẩm</Label>
+              <Label htmlFor="ingredient">Nguyên liệu</Label>
               <Select
-                value={selectedProductId}
-                onValueChange={(value) => {
-                  setSelectedProductId(value);
-                  setSelectedVariantId("");
-                }}
+                value={selectedIngredientId}
+                onValueChange={setSelectedIngredientId}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Chọn sản phẩm" />
+                  <SelectValue placeholder="Chọn nguyên liệu" />
                 </SelectTrigger>
                 <SelectContent>
-                  {products?.map((product) => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="variant">Loại sản phẩm</Label>
-              <Select
-                value={selectedVariantId}
-                onValueChange={setSelectedVariantId}
-                disabled={!selectedProductId}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Chọn loại" />
-                </SelectTrigger>
-                <SelectContent>
-                  {getVariantsForProduct(selectedProductId).map((variant) => (
-                    <SelectItem key={variant.id} value={variant.id}>
-                      {variant.name} ({variant.unit})
+                  {ingredients?.map((ingredient) => (
+                    <SelectItem key={ingredient.id} value={ingredient.id}>
+                      {ingredient.name} ({ingredient.unit})
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -380,12 +359,13 @@ export default function InventoryImportsPage() {
                 <Input
                   id="quantity"
                   type="number"
-                  min={1}
+                  min={0.01}
+                  step={0.01}
                   value={formData.quantity}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      quantity: parseInt(e.target.value) || 1,
+                      quantity: parseFloat(e.target.value) || 0,
                     })
                   }
                 />
@@ -416,6 +396,18 @@ export default function InventoryImportsPage() {
                 value={formData.importDate}
                 onChange={(e) =>
                   setFormData({ ...formData, importDate: e.target.value })
+                }
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="note">Ghi chú</Label>
+              <Textarea
+                id="note"
+                placeholder="Ghi chú (tùy chọn)"
+                value={formData.note}
+                onChange={(e) =>
+                  setFormData({ ...formData, note: e.target.value })
                 }
               />
             </div>

@@ -52,6 +52,8 @@ export interface TopProductsReport {
 export interface DailyRevenueItem {
   date: string;
   revenue: number;
+  cost: number;
+  profit: number;
   orders: number;
 }
 

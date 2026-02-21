@@ -1,38 +1,37 @@
 // Inventory Import types
 
-import { ProductVariant } from "./product";
 import { User } from "./user";
+import { Ingredient } from "./ingredient";
 
 export interface InventoryImport {
   id: string;
   quantity: number;
   importPrice: number;
+  totalPrice: number;
   importDate: string;
-  productVariantId?: string;
-  productVariant: {
+  note: string | null;
+  ingredientId?: string;
+  ingredient: {
     id: string;
     name: string;
     unit: string;
-    productId?: string;
-    product: {
-      id: string;
-      name: string;
-    };
   };
   createdBy: Pick<User, "id" | "name">;
 }
 
 export interface CreateInventoryImportInput {
-  productVariantId: string;
+  ingredientId: string;
   quantity: number;
   importPrice: number;
   importDate?: string;
+  note?: string;
 }
 
 export interface UpdateInventoryImportInput {
   quantity?: number;
   importPrice?: number;
   importDate?: string;
+  note?: string;
 }
 
 export interface InventoryImportListResponse {

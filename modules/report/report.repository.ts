@@ -6,6 +6,7 @@ import {
   OrdersStatsReport,
   TopProductsReport,
   DailyRevenueReport,
+  DailyRevenueItem,
 } from "./report.types";
 
 class ReportRepository {
@@ -22,7 +23,7 @@ class ReportRepository {
 
     const totalRevenue = orders.reduce(
       (sum, order) => sum + order.totalAmount.toNumber(),
-      0
+      0,
     );
     const totalOrders = orders.length;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
@@ -49,7 +50,7 @@ class ReportRepository {
 
     const totalImportCost = imports.reduce(
       (sum, imp) => sum + imp.quantity * imp.importPrice.toNumber(),
-      0
+      0,
     );
 
     return {
@@ -61,6 +62,7 @@ class ReportRepository {
   }
 
   async getProfit(from: Date, to: Date): Promise<ProfitReport> {
+    // Get revenue from orders (CONFIRMED, DONE)
     const orders = await prisma.order.findMany({
       where: {
         status: { in: ["CONFIRMED", "DONE"] },
@@ -68,23 +70,31 @@ class ReportRepository {
       },
       select: {
         totalAmount: true,
-        totalProfit: true,
-        totalCost: true,
       },
     });
 
     const totalRevenue = orders.reduce(
       (sum, order) => sum + order.totalAmount.toNumber(),
-      0
+      0,
     );
-    const grossProfit = orders.reduce(
-      (sum, order) => sum + order.totalProfit.toNumber(),
-      0
+
+    // Get cost from ingredient imports in the same period
+    const imports = await prisma.inventoryImport.findMany({
+      where: {
+        importDate: { gte: from, lte: to },
+      },
+      select: {
+        totalPrice: true,
+      },
+    });
+
+    const totalCost = imports.reduce(
+      (sum, imp) => sum + imp.totalPrice.toNumber(),
+      0,
     );
-    const totalCost = orders.reduce(
-      (sum, order) => sum + order.totalCost.toNumber(),
-      0
-    );
+
+    // Profit = Revenue - Cost (period-based calculation)
+    const grossProfit = totalRevenue - totalCost;
 
     return {
       totalRevenue,
@@ -138,7 +148,7 @@ class ReportRepository {
   async getTopProducts(
     from: Date,
     to: Date,
-    limit: number
+    limit: number,
   ): Promise<TopProductsReport> {
     const orderItems = await prisma.orderItem.findMany({
       where: {
@@ -215,6 +225,7 @@ class ReportRepository {
   }
 
   async getDailyRevenue(from: Date, to: Date): Promise<DailyRevenueReport> {
+    // Get orders revenue
     const orders = await prisma.order.findMany({
       where: {
         status: { in: ["CONFIRMED", "DONE"] },
@@ -226,8 +237,22 @@ class ReportRepository {
       },
     });
 
-    // Aggregate by day
-    const dayMap = new Map<string, { revenue: number; orders: number }>();
+    // Get ingredient import costs
+    const imports = await prisma.inventoryImport.findMany({
+      where: {
+        importDate: { gte: from, lte: to },
+      },
+      select: {
+        importDate: true,
+        totalPrice: true,
+      },
+    });
+
+    // Aggregate revenue by day
+    const dayMap = new Map<
+      string,
+      { revenue: number; cost: number; orders: number }
+    >();
 
     orders.forEach((order) => {
       const dateKey = order.createdAt.toISOString().split("T")[0];
@@ -238,17 +263,36 @@ class ReportRepository {
         existing.revenue += revenue;
         existing.orders++;
       } else {
-        dayMap.set(dateKey, { revenue, orders: 1 });
+        dayMap.set(dateKey, { revenue, cost: 0, orders: 1 });
       }
     });
 
-    // Fill in missing days
-    const data: { date: string; revenue: number; orders: number }[] = [];
+    // Add costs by day
+    imports.forEach((imp) => {
+      const dateKey = imp.importDate.toISOString().split("T")[0];
+      const existing = dayMap.get(dateKey);
+      const cost = imp.totalPrice.toNumber();
+
+      if (existing) {
+        existing.cost += cost;
+      } else {
+        dayMap.set(dateKey, { revenue: 0, cost, orders: 0 });
+      }
+    });
+
+    // Fill in missing days and calculate profit
+    const data: DailyRevenueItem[] = [];
     const current = new Date(from);
     while (current <= to) {
       const dateKey = current.toISOString().split("T")[0];
-      const dayData = dayMap.get(dateKey) || { revenue: 0, orders: 0 };
-      data.push({ date: dateKey, ...dayData });
+      const dayData = dayMap.get(dateKey) || { revenue: 0, cost: 0, orders: 0 };
+      data.push({
+        date: dateKey,
+        revenue: dayData.revenue,
+        cost: dayData.cost,
+        profit: dayData.revenue - dayData.cost,
+        orders: dayData.orders,
+      });
       current.setDate(current.getDate() + 1);
     }
 

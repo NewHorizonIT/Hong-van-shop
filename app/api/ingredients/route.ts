@@ -1,21 +1,21 @@
 import { NextRequest } from "next/server";
 import { ZodError } from "zod";
 import {
-  productService,
-  createProductSchema,
-  productQuerySchema,
-} from "@/modules/product";
+  ingredientService,
+  createIngredientSchema,
+  ingredientQuerySchema,
+} from "@/modules/ingredient";
 import { apiSuccess, apiError, ApiErrors, withAuth } from "@/modules/common";
 import { ApiException } from "@/modules/common/api-error";
 
 /**
  * @swagger
- * /api/products:
+ * /api/ingredients:
  *   get:
  *     tags:
- *       - Products
- *     summary: Get all products
- *     description: Get paginated list of products with variants
+ *       - Ingredients
+ *     summary: Get all ingredients
+ *     description: Get paginated list of ingredients
  *     security:
  *       - bearerAuth: []
  *       - cookieAuth: []
@@ -35,32 +35,26 @@ import { ApiException } from "@/modules/common/api-error";
  *         schema:
  *           type: string
  *       - in: query
- *         name: categoryId
- *         schema:
- *           type: string
- *           format: uuid
- *       - in: query
  *         name: isActive
  *         schema:
  *           type: boolean
  *     responses:
  *       200:
- *         description: List of products
+ *         description: List of ingredients
  *       401:
  *         description: Unauthorized
  */
 export const GET = withAuth(async (req: NextRequest) => {
   try {
     const { searchParams } = new URL(req.url);
-    const query = productQuerySchema.parse({
+    const query = ingredientQuerySchema.parse({
       page: searchParams.get("page") || 1,
       limit: searchParams.get("limit") || 10,
       search: searchParams.get("search") || undefined,
-      categoryId: searchParams.get("categoryId") || undefined,
       isActive: searchParams.get("isActive") || undefined,
     });
 
-    const result = await productService.findAll(query);
+    const result = await ingredientService.findAll(query);
     return apiSuccess(result);
   } catch (error) {
     if (error instanceof ZodError) {
@@ -72,19 +66,19 @@ export const GET = withAuth(async (req: NextRequest) => {
       return apiError(error.code, error.message, error.statusCode);
     }
 
-    console.error("Get products error:", error);
+    console.error("Get ingredients error:", error);
     return ApiErrors.INTERNAL_ERROR();
   }
 });
 
 /**
  * @swagger
- * /api/products:
+ * /api/ingredients:
  *   post:
  *     tags:
- *       - Products
- *     summary: Create product
- *     description: Create a new product with variants (Admin only)
+ *       - Ingredients
+ *     summary: Create ingredient
+ *     description: Create a new ingredient (Admin only)
  *     security:
  *       - bearerAuth: []
  *       - cookieAuth: []
@@ -96,37 +90,16 @@ export const GET = withAuth(async (req: NextRequest) => {
  *             type: object
  *             required:
  *               - name
- *               - categoryId
- *               - variants
  *             properties:
  *               name:
  *                 type: string
- *                 example: Gà rán
- *               description:
+ *                 example: Gà nguyên con
+ *               unit:
  *                 type: string
- *               categoryId:
- *                 type: string
- *                 format: uuid
- *               variants:
- *                 type: array
- *                 items:
- *                   type: object
- *                   required:
- *                     - name
- *                     - sellingPrice
- *                   properties:
- *                     name:
- *                       type: string
- *                       example: Size M
- *                     unit:
- *                       type: string
- *                       example: con
- *                     sellingPrice:
- *                       type: number
- *                       example: 80000
+ *                 example: kg
  *     responses:
  *       201:
- *         description: Product created
+ *         description: Ingredient created
  *       400:
  *         description: Validation error
  *       401:
@@ -138,10 +111,10 @@ export const POST = withAuth(
   async (req: NextRequest) => {
     try {
       const body = await req.json();
-      const input = createProductSchema.parse(body);
+      const input = createIngredientSchema.parse(body);
 
-      const product = await productService.create(input);
-      return apiSuccess(product, 201);
+      const ingredient = await ingredientService.create(input);
+      return apiSuccess(ingredient, 201);
     } catch (error) {
       if (error instanceof ZodError) {
         const message = error.issues.map((e) => e.message).join(", ");
@@ -152,9 +125,9 @@ export const POST = withAuth(
         return apiError(error.code, error.message, error.statusCode);
       }
 
-      console.error("Create product error:", error);
+      console.error("Create ingredient error:", error);
       return ApiErrors.INTERNAL_ERROR();
     }
   },
-  { roles: ["ADMIN"] },
+  { roles: ["ADMIN"] }
 );

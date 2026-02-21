@@ -15,14 +15,14 @@ import {
 
 export const inventoryService = {
   async findAll(
-    query: InventoryImportQueryInput,
+    query: InventoryImportQueryInput
   ): Promise<InventoryImportListResponse> {
-    const { page, limit, productVariantId, from, to } = query;
+    const { page, limit, ingredientId, from, to } = query;
 
     const { imports, total } = await inventoryRepository.findAll(
-      { productVariantId, from, to },
+      { ingredientId, from, to },
       page,
-      limit,
+      limit
     );
 
     return {
@@ -38,7 +38,7 @@ export const inventoryService = {
     const importRecord = await inventoryRepository.findById(id);
 
     if (!importRecord) {
-      throw new NotFoundException("Inventory import");
+      throw new NotFoundException("Phiếu nhập");
     }
 
     return importRecord;
@@ -46,41 +46,45 @@ export const inventoryService = {
 
   async create(
     input: CreateInventoryImportInput,
-    createdById: string,
+    createdById: string
   ): Promise<InventoryImportResponse> {
-    // Validate variant exists
-    const variant = await inventoryRepository.getVariant(
-      input.productVariantId,
+    // Validate ingredient exists
+    const ingredient = await inventoryRepository.getIngredient(
+      input.ingredientId
     );
-    if (!variant) {
-      throw new ValidationException("Product variant not found");
+    if (!ingredient) {
+      throw new ValidationException("Nguyên liệu không tồn tại");
+    }
+    if (!ingredient.isActive) {
+      throw new ValidationException("Nguyên liệu đã bị ẩn");
     }
 
     return inventoryRepository.create({
-      productVariantId: input.productVariantId,
+      ingredientId: input.ingredientId,
       quantity: input.quantity,
       importPrice: input.importPrice,
       importDate: input.importDate || new Date(),
+      note: input.note,
       createdById,
     });
   },
 
   async update(
     id: string,
-    input: UpdateInventoryImportInput,
+    input: UpdateInventoryImportInput
   ): Promise<InventoryImportResponse> {
     const existing = await inventoryRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException("Inventory import");
+      throw new NotFoundException("Phiếu nhập");
     }
 
     const result = await inventoryRepository.update(
       id,
-      existing.quantity,
-      input,
+      Number(existing.quantity),
+      input
     );
     if (!result) {
-      throw new NotFoundException("Inventory import");
+      throw new NotFoundException("Phiếu nhập");
     }
 
     return result;
@@ -89,13 +93,17 @@ export const inventoryService = {
   async delete(id: string): Promise<void> {
     const existing = await inventoryRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException("Inventory import");
+      throw new NotFoundException("Phiếu nhập");
     }
 
     await inventoryRepository.delete(
       id,
-      existing.quantity,
-      existing.productVariant.id,
+      Number(existing.quantity),
+      existing.ingredient.id
     );
+  },
+
+  async getStats(from?: Date, to?: Date) {
+    return inventoryRepository.getStats(from, to);
   },
 };

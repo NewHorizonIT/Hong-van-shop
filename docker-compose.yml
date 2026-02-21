@@ -1,7 +1,7 @@
 # Docker Compose for Hong Van Shop
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:17
     container_name: hongvan-postgres
     environment:
       POSTGRES_USER: admin
@@ -17,20 +17,20 @@ services:
       timeout: 5s
       retries: 5
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: hongvan-app
-    environment:
-      DATABASE_URL: postgresql://admin:admin@postgres:5432/hongvanshop_db
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
-      NODE_ENV: production
-    ports:
-      - "3000:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: hongvan-app
+  #   environment:
+  #     DATABASE_URL: postgresql://admin:admin@postgres:5432/hongvanshop_db
+  #     JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+  #     NODE_ENV: production
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
 
 volumes:
   postgres_data:

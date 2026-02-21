@@ -31,9 +31,10 @@ export default function AnalyticsPage() {
       case "yearly": {
         const now = new Date();
         const threeYearsAgo = new Date(now.getFullYear() - 3, 0, 1);
+        // Use stable date strings
         return {
-          from: threeYearsAgo.toISOString(),
-          to: now.toISOString(),
+          from: threeYearsAgo.toISOString().split("T")[0] + "T00:00:00.000Z",
+          to: now.toISOString().split("T")[0] + "T23:59:59.999Z",
         };
       }
       default:

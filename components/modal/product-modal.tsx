@@ -12,13 +12,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2 } from "lucide-react";
-import { Product, ProductVariant, CreateProductInput, CreateVariantInput } from "@/types/product";
+import {
+  Product,
+  ProductVariant,
+  CreateProductInput,
+  CreateVariantInput,
+} from "@/types/product";
 import { Category } from "@/types/category";
 
 interface ProductModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  product?: (Product & { category?: Category; variants?: ProductVariant[] }) | null;
+  product?:
+    | (Product & { category?: Category; variants?: ProductVariant[] })
+    | null;
   categories: Category[];
   onSave: (data: CreateProductInput & { id?: string }) => void;
   isLoading?: boolean;
@@ -27,18 +34,14 @@ interface ProductModalProps {
 interface VariantFormData {
   id?: string;
   name: string;
-  costPrice: string;
   sellingPrice: string;
   unit: string;
-  stockQuantity: string;
 }
 
 const DEFAULT_VARIANT: VariantFormData = {
   name: "",
-  costPrice: "",
   sellingPrice: "",
   unit: "con",
-  stockQuantity: "0",
 };
 
 export default function ProductModal({
@@ -58,7 +61,9 @@ export default function ProductModal({
     isActive: true,
   });
 
-  const [variants, setVariants] = useState<VariantFormData[]>([{ ...DEFAULT_VARIANT }]);
+  const [variants, setVariants] = useState<VariantFormData[]>([
+    { ...DEFAULT_VARIANT },
+  ]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Reset form when product changes or modal opens
@@ -76,12 +81,10 @@ export default function ProductModal({
             ? product.variants.map((v) => ({
                 id: v.id,
                 name: v.name,
-                costPrice: v.costPrice.toString(),
                 sellingPrice: v.sellingPrice.toString(),
                 unit: v.unit,
-                stockQuantity: v.stockQuantity.toString(),
               }))
-            : [{ ...DEFAULT_VARIANT }]
+            : [{ ...DEFAULT_VARIANT }],
         );
       } else {
         setFormData({
@@ -97,7 +100,9 @@ export default function ProductModal({
   }, [open, product, categories]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -109,10 +114,10 @@ export default function ProductModal({
   const handleVariantChange = (
     index: number,
     field: keyof VariantFormData,
-    value: string
+    value: string,
   ) => {
     setVariants((prev) =>
-      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
+      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)),
     );
     // Clear variant errors
     if (errors[`variant_${index}_${field}`]) {
@@ -146,9 +151,6 @@ export default function ProductModal({
       if (!variant.name.trim()) {
         newErrors[`variant_${index}_name`] = "Tên loại là bắt buộc";
       }
-      if (!variant.costPrice || Number(variant.costPrice) < 0) {
-        newErrors[`variant_${index}_costPrice`] = "Giá nhập không hợp lệ";
-      }
       if (!variant.sellingPrice || Number(variant.sellingPrice) <= 0) {
         newErrors[`variant_${index}_sellingPrice`] = "Giá bán phải lớn hơn 0";
       }
@@ -165,10 +167,8 @@ export default function ProductModal({
 
     const variantsData: CreateVariantInput[] = variants.map((v) => ({
       name: v.name.trim(),
-      costPrice: Number(v.costPrice),
       sellingPrice: Number(v.sellingPrice),
       unit: v.unit,
-      stockQuantity: Number(v.stockQuantity) || 0,
     }));
 
     onSave({
@@ -324,66 +324,26 @@ export default function ProductModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  {/* Cost Price */}
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
-                      Giá nhập <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="150000"
-                      value={variant.costPrice}
-                      onChange={(e) =>
-                        handleVariantChange(index, "costPrice", e.target.value)
-                      }
-                      className="h-8 text-sm"
-                      aria-invalid={!!errors[`variant_${index}_costPrice`]}
-                    />
-                    {errors[`variant_${index}_costPrice`] && (
-                      <p className="text-xs text-destructive">
-                        {errors[`variant_${index}_costPrice`]}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Selling Price */}
-                  <div className="space-y-1">
-                    <label className="text-xs text-muted-foreground">
-                      Giá bán <span className="text-destructive">*</span>
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="250000"
-                      value={variant.sellingPrice}
-                      onChange={(e) =>
-                        handleVariantChange(index, "sellingPrice", e.target.value)
-                      }
-                      className="h-8 text-sm"
-                      aria-invalid={!!errors[`variant_${index}_sellingPrice`]}
-                    />
-                    {errors[`variant_${index}_sellingPrice`] && (
-                      <p className="text-xs text-destructive">
-                        {errors[`variant_${index}_sellingPrice`]}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Stock Quantity */}
+                {/* Selling Price */}
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">
-                    Số lượng tồn
+                    Giá bán <span className="text-destructive">*</span>
                   </label>
                   <Input
                     type="number"
-                    placeholder="0"
-                    value={variant.stockQuantity}
+                    placeholder="250000"
+                    value={variant.sellingPrice}
                     onChange={(e) =>
-                      handleVariantChange(index, "stockQuantity", e.target.value)
+                      handleVariantChange(index, "sellingPrice", e.target.value)
                     }
                     className="h-8 text-sm"
+                    aria-invalid={!!errors[`variant_${index}_sellingPrice`]}
                   />
+                  {errors[`variant_${index}_sellingPrice`] && (
+                    <p className="text-xs text-destructive">
+                      {errors[`variant_${index}_sellingPrice`]}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}

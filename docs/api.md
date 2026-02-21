@@ -56,3 +56,5 @@ GET /api/reports/top-products?from=&to=
 GET /api/export/orders?from=&to=
 GET /api/export/revenue?from=&to=
 GET /api/export/customers
+
+0,28 CU/ Day = 0,28 

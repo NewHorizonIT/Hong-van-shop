@@ -40,6 +40,7 @@ export async function main() {
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.inventoryImport.deleteMany();
+  await prisma.ingredient.deleteMany();
   await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
@@ -90,509 +91,307 @@ export async function main() {
   // CATEGORIES
   // ============================================
   console.log("📁 Creating categories...");
-  const categories = await Promise.all([
-    prisma.category.create({ data: { name: "Gà" } }),
-    prisma.category.create({ data: { name: "Xôi" } }),
-    prisma.category.create({ data: { name: "Món ăn kèm" } }),
-    prisma.category.create({ data: { name: "Đồ uống" } }),
-  ]);
+  const categoryData = [
+    { name: "Gà" },
+    { name: "Xôi" },
+    { name: "Nước uống" },
+    { name: "Món ăn kèm" },
+  ];
+
+  const categories = await Promise.all(
+    categoryData.map((cat) => prisma.category.create({ data: cat })),
+  );
   console.log(`   ✅ Created ${categories.length} categories`);
 
-  const [catGa, catXoi, catAnKem, catDoUong] = categories;
+  // ============================================
+  // INGREDIENTS (Nguyên liệu)
+  // ============================================
+  console.log("🥬 Creating ingredients...");
+  const ingredientData = [
+    { name: "Gà nguyên con", unit: "con" },
+    { name: "Gạo nếp", unit: "kg" },
+    { name: "Đậu xanh", unit: "kg" },
+    { name: "Hành phi", unit: "kg" },
+    { name: "Mỡ hành", unit: "lít" },
+    { name: "Nước mắm", unit: "lít" },
+    { name: "Ớt tươi", unit: "kg" },
+    { name: "Rau răm", unit: "bó" },
+    { name: "Chanh", unit: "kg" },
+    { name: "Gừng", unit: "kg" },
+    { name: "Coca Cola", unit: "chai" },
+    { name: "Pepsi", unit: "chai" },
+    { name: "Nước suối", unit: "chai" },
+    { name: "Dưa chuột muối", unit: "kg" },
+    { name: "Giá đỗ", unit: "kg" },
+  ];
+
+  const ingredients = await Promise.all(
+    ingredientData.map((ing) =>
+      prisma.ingredient.create({
+        data: {
+          name: ing.name,
+          unit: ing.unit,
+          stockQuantity: randomInt(5, 50),
+        },
+      }),
+    ),
+  );
+  console.log(`   ✅ Created ${ingredients.length} ingredients`);
 
   // ============================================
-  // PRODUCTS & VARIANTS
+  // PRODUCTS
   // ============================================
-  console.log("🍗 Creating products and variants...");
+  console.log("🍗 Creating products...");
+
+  const gaCategory = categories.find((c) => c.name === "Gà")!;
+  const xoiCategory = categories.find((c) => c.name === "Xôi")!;
+  const nuocCategory = categories.find((c) => c.name === "Nước uống")!;
+  const monKemCategory = categories.find((c) => c.name === "Món ăn kèm")!;
 
   // Gà products
   const gaLuoc = await prisma.product.create({
     data: {
-      name: "Gà luộc",
-      description: "Gà ta luộc nguyên con, da vàng óng, thịt ngọt mềm",
-      categoryId: catGa.id,
+      name: "Gà Luộc",
+      description: "Gà ta luộc nguyên con, thịt ngọt, da giòn",
+      categoryId: gaCategory.id,
       variants: {
         create: [
-          {
-            name: "Nửa con",
-            costPrice: 85000,
-            sellingPrice: 120000,
-            stockQuantity: 20,
-            unit: "phần",
-          },
-          {
-            name: "Nguyên con",
-            costPrice: 160000,
-            sellingPrice: 230000,
-            stockQuantity: 15,
-            unit: "con",
-          },
-          {
-            name: "Đùi",
-            costPrice: 45000,
-            sellingPrice: 65000,
-            stockQuantity: 30,
-            unit: "phần",
-          },
-          {
-            name: "Cánh",
-            costPrice: 25000,
-            sellingPrice: 40000,
-            stockQuantity: 40,
-            unit: "phần",
-          },
+          { name: "Nửa con", sellingPrice: 150000, unit: "phần" },
+          { name: "Nguyên con", sellingPrice: 280000, unit: "con" },
+          { name: "Đùi", sellingPrice: 80000, unit: "phần" },
+          { name: "Cánh", sellingPrice: 60000, unit: "phần" },
         ],
       },
     },
-    include: { variants: true },
   });
 
   const gaRoti = await prisma.product.create({
     data: {
-      name: "Gà rô ti",
-      description: "Gà nướng rô ti giòn rụm, thơm lừng",
-      categoryId: catGa.id,
+      name: "Gà Roti",
+      description: "Gà nướng roti thơm ngon, vàng đều",
+      categoryId: gaCategory.id,
       variants: {
         create: [
-          {
-            name: "Nửa con",
-            costPrice: 90000,
-            sellingPrice: 130000,
-            stockQuantity: 15,
-            unit: "phần",
-          },
-          {
-            name: "Nguyên con",
-            costPrice: 170000,
-            sellingPrice: 250000,
-            stockQuantity: 10,
-            unit: "con",
-          },
+          { name: "Nửa con", sellingPrice: 170000, unit: "phần" },
+          { name: "Nguyên con", sellingPrice: 320000, unit: "con" },
         ],
       },
     },
-    include: { variants: true },
   });
 
   const gaXe = await prisma.product.create({
     data: {
-      name: "Gà xé",
-      description: "Gà xé phay trộn rau răm, hành phi",
-      categoryId: catGa.id,
+      name: "Gà Xé",
+      description: "Gà xé phay trộn hành tây, rau răm",
+      categoryId: gaCategory.id,
       variants: {
         create: [
-          {
-            name: "Nhỏ",
-            costPrice: 30000,
-            sellingPrice: 45000,
-            stockQuantity: 25,
-            unit: "phần",
-          },
-          {
-            name: "Lớn",
-            costPrice: 55000,
-            sellingPrice: 80000,
-            stockQuantity: 20,
-            unit: "phần",
-          },
+          { name: "Phần nhỏ", sellingPrice: 50000, unit: "phần" },
+          { name: "Phần lớn", sellingPrice: 90000, unit: "phần" },
         ],
       },
     },
-    include: { variants: true },
   });
 
   // Xôi products
   const xoiGa = await prisma.product.create({
     data: {
-      name: "Xôi gà",
-      description: "Xôi nếp dẻo thơm ăn kèm gà luộc",
-      categoryId: catXoi.id,
+      name: "Xôi Gà",
+      description: "Xôi nếp dẻo với gà xé sợi",
+      categoryId: xoiCategory.id,
       variants: {
         create: [
-          {
-            name: "Nhỏ",
-            costPrice: 12000,
-            sellingPrice: 20000,
-            stockQuantity: 50,
-            unit: "phần",
-          },
-          {
-            name: "Lớn",
-            costPrice: 20000,
-            sellingPrice: 35000,
-            stockQuantity: 40,
-            unit: "phần",
-          },
+          { name: "Phần nhỏ", sellingPrice: 35000, unit: "phần" },
+          { name: "Phần lớn", sellingPrice: 50000, unit: "phần" },
         ],
       },
     },
-    include: { variants: true },
   });
 
-  const xoiDau = await prisma.product.create({
+  const xoiDauXanh = await prisma.product.create({
     data: {
-      name: "Xôi đậu xanh",
-      description: "Xôi đậu xanh bùi bùi, béo ngậy",
-      categoryId: catXoi.id,
+      name: "Xôi Đậu Xanh",
+      description: "Xôi nếp với đậu xanh bở tơi",
+      categoryId: xoiCategory.id,
       variants: {
         create: [
-          {
-            name: "Nhỏ",
-            costPrice: 10000,
-            sellingPrice: 18000,
-            stockQuantity: 45,
-            unit: "phần",
-          },
-          {
-            name: "Lớn",
-            costPrice: 18000,
-            sellingPrice: 30000,
-            stockQuantity: 35,
-            unit: "phần",
-          },
+          { name: "Phần nhỏ", sellingPrice: 20000, unit: "phần" },
+          { name: "Phần lớn", sellingPrice: 30000, unit: "phần" },
         ],
       },
     },
-    include: { variants: true },
   });
 
-  const xoiLac = await prisma.product.create({
+  // Nước uống
+  const cocaCola = await prisma.product.create({
     data: {
-      name: "Xôi lạc",
-      description: "Xôi lạc rang muối bùi thơm",
-      categoryId: catXoi.id,
+      name: "Coca Cola",
+      description: "Nước ngọt Coca Cola",
+      categoryId: nuocCategory.id,
       variants: {
         create: [
-          {
-            name: "Nhỏ",
-            costPrice: 8000,
-            sellingPrice: 15000,
-            stockQuantity: 50,
-            unit: "phần",
-          },
-          {
-            name: "Lớn",
-            costPrice: 15000,
-            sellingPrice: 25000,
-            stockQuantity: 40,
-            unit: "phần",
-          },
+          { name: "Lon", sellingPrice: 15000, unit: "lon" },
+          { name: "Chai 500ml", sellingPrice: 12000, unit: "chai" },
         ],
       },
     },
-    include: { variants: true },
+  });
+
+  const pepsi = await prisma.product.create({
+    data: {
+      name: "Pepsi",
+      description: "Nước ngọt Pepsi",
+      categoryId: nuocCategory.id,
+      variants: {
+        create: [
+          { name: "Lon", sellingPrice: 15000, unit: "lon" },
+          { name: "Chai 500ml", sellingPrice: 12000, unit: "chai" },
+        ],
+      },
+    },
+  });
+
+  const nuocSuoi = await prisma.product.create({
+    data: {
+      name: "Nước Suối",
+      description: "Nước khoáng tinh khiết",
+      categoryId: nuocCategory.id,
+      variants: {
+        create: [{ name: "Chai 500ml", sellingPrice: 8000, unit: "chai" }],
+      },
+    },
   });
 
   // Món ăn kèm
-  const nuocMam = await prisma.product.create({
+  const duaChuot = await prisma.product.create({
     data: {
-      name: "Nước mắm gừng",
-      description: "Nước mắm pha gừng chua ngọt",
-      categoryId: catAnKem.id,
+      name: "Dưa Chuột Muối",
+      description: "Dưa chuột muối chua ngọt",
+      categoryId: monKemCategory.id,
       variants: {
-        create: [
-          {
-            name: "Chén nhỏ",
-            costPrice: 3000,
-            sellingPrice: 5000,
-            stockQuantity: 100,
-            unit: "chén",
-          },
-          {
-            name: "Chén lớn",
-            costPrice: 5000,
-            sellingPrice: 10000,
-            stockQuantity: 80,
-            unit: "chén",
-          },
-        ],
+        create: [{ name: "Phần nhỏ", sellingPrice: 10000, unit: "phần" }],
       },
     },
-    include: { variants: true },
   });
 
   const rauSong = await prisma.product.create({
     data: {
-      name: "Rau sống",
+      name: "Rau Sống",
       description: "Đĩa rau sống tươi ngon",
-      categoryId: catAnKem.id,
+      categoryId: monKemCategory.id,
       variants: {
-        create: [
-          {
-            name: "Đĩa nhỏ",
-            costPrice: 8000,
-            sellingPrice: 15000,
-            stockQuantity: 60,
-            unit: "đĩa",
-          },
-          {
-            name: "Đĩa lớn",
-            costPrice: 15000,
-            sellingPrice: 25000,
-            stockQuantity: 40,
-            unit: "đĩa",
-          },
-        ],
+        create: [{ name: "Đĩa", sellingPrice: 15000, unit: "đĩa" }],
       },
     },
-    include: { variants: true },
   });
 
-  const chaoLong = await prisma.product.create({
-    data: {
-      name: "Cháo lòng gà",
-      description: "Cháo lòng gà nóng hổi, thơm ngon",
-      categoryId: catAnKem.id,
-      variants: {
-        create: [
-          {
-            name: "Bát nhỏ",
-            costPrice: 15000,
-            sellingPrice: 25000,
-            stockQuantity: 30,
-            unit: "bát",
-          },
-          {
-            name: "Bát lớn",
-            costPrice: 25000,
-            sellingPrice: 40000,
-            stockQuantity: 25,
-            unit: "bát",
-          },
-        ],
-      },
-    },
-    include: { variants: true },
-  });
+  console.log(`   ✅ Created products with variants`);
 
-  // Đồ uống
-  const traDa = await prisma.product.create({
-    data: {
-      name: "Trà đá",
-      description: "Trà đá mát lạnh",
-      categoryId: catDoUong.id,
-      variants: {
-        create: [
-          {
-            name: "Ly",
-            costPrice: 2000,
-            sellingPrice: 5000,
-            stockQuantity: 200,
-            unit: "ly",
-          },
-          {
-            name: "Bình",
-            costPrice: 8000,
-            sellingPrice: 15000,
-            stockQuantity: 50,
-            unit: "bình",
-          },
-        ],
-      },
-    },
-    include: { variants: true },
+  // Get all variants for orders
+  const allVariants = await prisma.productVariant.findMany({
+    include: { product: true },
   });
-
-  const nuocNgot = await prisma.product.create({
-    data: {
-      name: "Nước ngọt",
-      description: "Coca, Pepsi, 7Up",
-      categoryId: catDoUong.id,
-      variants: {
-        create: [
-          {
-            name: "Lon",
-            costPrice: 8000,
-            sellingPrice: 15000,
-            stockQuantity: 100,
-            unit: "lon",
-          },
-          {
-            name: "Chai",
-            costPrice: 10000,
-            sellingPrice: 18000,
-            stockQuantity: 60,
-            unit: "chai",
-          },
-        ],
-      },
-    },
-    include: { variants: true },
-  });
-
-  const bia = await prisma.product.create({
-    data: {
-      name: "Bia",
-      description: "Bia Hà Nội, Tiger, Heineken",
-      categoryId: catDoUong.id,
-      variants: {
-        create: [
-          {
-            name: "Hà Nội",
-            costPrice: 12000,
-            sellingPrice: 20000,
-            stockQuantity: 100,
-            unit: "lon",
-          },
-          {
-            name: "Tiger",
-            costPrice: 15000,
-            sellingPrice: 25000,
-            stockQuantity: 80,
-            unit: "lon",
-          },
-          {
-            name: "Heineken",
-            costPrice: 18000,
-            sellingPrice: 30000,
-            stockQuantity: 60,
-            unit: "lon",
-          },
-        ],
-      },
-    },
-    include: { variants: true },
-  });
-
-  // Collect all variants for order creation
-  const allProducts = [
-    gaLuoc,
-    gaRoti,
-    gaXe,
-    xoiGa,
-    xoiDau,
-    xoiLac,
-    nuocMam,
-    rauSong,
-    chaoLong,
-    traDa,
-    nuocNgot,
-    bia,
-  ];
-  const allVariants = allProducts.flatMap((p) => p.variants);
-  console.log(
-    `   ✅ Created ${allProducts.length} products with ${allVariants.length} variants`,
-  );
 
   // ============================================
   // CUSTOMERS
   // ============================================
   console.log("👥 Creating customers...");
-  const customerData = [
-    {
-      name: "Nguyễn Văn An",
-      phone: "0901234567",
-      address: "123 Láng Hạ, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Trần Thị Bình",
-      phone: "0912345678",
-      address: "45 Giảng Võ, Ba Đình, Hà Nội",
-    },
-    {
-      name: "Lê Hoàng Cường",
-      phone: "0923456789",
-      address: "78 Nguyễn Chí Thanh, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Phạm Thị Duyên",
-      phone: "0934567890",
-      address: "90 Tây Sơn, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Hoàng Văn Em",
-      phone: "0945678901",
-      address: "234 Xã Đàn, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Ngô Thị Phương",
-      phone: "0956789012",
-      address: "567 Trường Chinh, Thanh Xuân, Hà Nội",
-    },
-    {
-      name: "Đặng Minh Giang",
-      phone: "0967890123",
-      address: "12 Khâm Thiên, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Vũ Thị Hương",
-      phone: "0978901234",
-      address: "89 Thái Hà, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Bùi Văn Khang",
-      phone: "0989012345",
-      address: "156 Nguyễn Lương Bằng, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Lý Thị Lan",
-      phone: "0990123456",
-      address: "23 Huỳnh Thúc Kháng, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Cao Văn Mạnh",
-      phone: "0911223344",
-      address: "45 Chùa Bộc, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Đinh Thị Nga",
-      phone: "0922334455",
-      address: "67 Phạm Ngọc Thạch, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Tô Văn Phú",
-      phone: "0933445566",
-      address: "89 Đặng Văn Ngữ, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Mai Thị Quỳnh",
-      phone: "0944556677",
-      address: "101 Tôn Thất Tùng, Đống Đa, Hà Nội",
-    },
-    {
-      name: "Dương Văn Sơn",
-      phone: "0955667788",
-      address: "202 Cầu Giấy, Cầu Giấy, Hà Nội",
-    },
+  const customerNames = [
+    "Nguyễn Văn An",
+    "Trần Thị Bình",
+    "Lê Văn Cường",
+    "Phạm Thị Dung",
+    "Hoàng Văn Em",
+    "Đỗ Thị Phương",
+    "Bùi Văn Giang",
+    "Vũ Thị Hoa",
+    "Ngô Văn Kiên",
+    "Đinh Thị Lan",
+    "Lý Văn Minh",
+    "Cao Thị Ngọc",
+    "Đặng Văn Phú",
+    "Mai Thị Quỳnh",
+    "Tạ Văn Sơn",
   ];
 
   const customers = await Promise.all(
-    customerData.map((c) => prisma.customer.create({ data: c })),
+    customerNames.map((name, index) =>
+      prisma.customer.create({
+        data: {
+          name,
+          phone: `090${String(index + 1).padStart(7, "0")}`,
+          address: `Số ${randomInt(1, 200)}, Đường ${randomInt(1, 50)}, Quận ${randomInt(1, 12)}, TP.HCM`,
+        },
+      }),
+    ),
   );
   console.log(`   ✅ Created ${customers.length} customers`);
 
   // ============================================
-  // ORDERS
+  // INVENTORY IMPORTS (Nhập nguyên liệu)
   // ============================================
-  console.log("📦 Creating orders...");
-
+  console.log("📦 Creating inventory imports...");
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Generate 50 orders
-  const orderPromises = [];
+  let importCount = 0;
+  for (const ingredient of ingredients) {
+    // Create 2-5 import records per ingredient
+    const numImports = randomInt(2, 5);
+    for (let i = 0; i < numImports; i++) {
+      const quantity = randomInt(5, 30);
+      const unitPrices: Record<string, number> = {
+        con: randomInt(80000, 120000),
+        kg: randomInt(20000, 80000),
+        lít: randomInt(15000, 50000),
+        bó: randomInt(5000, 15000),
+        chai: randomInt(5000, 15000),
+      };
+      const importPrice =
+        unitPrices[ingredient.unit] || randomInt(10000, 50000);
+
+      await prisma.inventoryImport.create({
+        data: {
+          ingredientId: ingredient.id,
+          quantity,
+          importPrice,
+          totalPrice: quantity * importPrice,
+          importDate: randomDate(thirtyDaysAgo, now),
+          createdById: randomItem(users).id,
+          note:
+            i === 0 ? `Nhập lô hàng đầu tiên - ${ingredient.name}` : undefined,
+        },
+      });
+      importCount++;
+    }
+  }
+  console.log(`   ✅ Created ${importCount} inventory imports`);
+
+  // ============================================
+  // ORDERS
+  // ============================================
+  console.log("📝 Creating orders...");
+  const orderStatuses = [
+    OrderStatus.DONE,
+    OrderStatus.DONE,
+    OrderStatus.DONE,
+    OrderStatus.CONFIRMED,
+    OrderStatus.PENDING,
+    OrderStatus.CANCELLED,
+  ];
+
+  let orderCount = 0;
   for (let i = 0; i < 50; i++) {
     const customer = randomItem(customers);
-    const user = randomItem(users);
+    const status = randomItem(orderStatuses);
     const orderDate = randomDate(thirtyDaysAgo, now);
-    const deliveryTime = new Date(
-      orderDate.getTime() + randomInt(1, 4) * 60 * 60 * 1000,
+    const deliveryDate = new Date(
+      orderDate.getTime() + randomInt(1, 24) * 60 * 60 * 1000,
     );
 
-    // Determine order status based on delivery time
-    let status: OrderStatus;
-    if (deliveryTime < now) {
-      // Past delivery - mostly DONE, some CANCELLED
-      status = Math.random() > 0.1 ? OrderStatus.DONE : OrderStatus.CANCELLED;
-    } else {
-      // Future delivery - PENDING or CONFIRMED
-      status =
-        Math.random() > 0.4 ? OrderStatus.CONFIRMED : OrderStatus.PENDING;
-    }
-
-    // Generate 1-5 items per order
+    // Random 1-5 items per order
     const numItems = randomInt(1, 5);
-    const selectedVariants: typeof allVariants = [];
+    const selectedVariants = [];
     for (let j = 0; j < numItems; j++) {
       const variant = randomItem(allVariants);
       if (!selectedVariants.find((v) => v.id === variant.id)) {
@@ -600,128 +399,62 @@ export async function main() {
       }
     }
 
-    const items = selectedVariants.map((variant) => ({
-      quantity: randomInt(1, 3),
-      unitPrice: variant.sellingPrice,
-      costPrice: variant.costPrice,
-      subtotal: Number(variant.sellingPrice) * randomInt(1, 3),
-      productVariantId: variant.id,
-    }));
+    let totalAmount = 0;
+    let totalCost = 0;
+    const orderItems = selectedVariants.map((variant) => {
+      const quantity = randomInt(1, 3);
+      const unitPrice = Number(variant.sellingPrice);
+      const costPrice = Math.round(unitPrice * 0.6); // Assume 40% margin
+      const subtotal = unitPrice * quantity;
 
-    // Calculate totals
-    const totalAmount = items.reduce((sum, item) => sum + item.subtotal, 0);
-    const totalCost = items.reduce(
-      (sum, item) => sum + Number(item.costPrice) * item.quantity,
-      0,
-    );
-    const discount = Math.random() > 0.8 ? randomInt(1, 5) * 10000 : 0;
-    const totalProfit = totalAmount - totalCost - discount;
+      totalAmount += subtotal;
+      totalCost += costPrice * quantity;
 
-    // Fix item subtotals with actual quantities
-    const fixedItems = items.map((item) => ({
-      ...item,
-      subtotal: Number(item.unitPrice) * item.quantity,
-    }));
+      return {
+        productVariantId: variant.id,
+        quantity,
+        unitPrice,
+        costPrice,
+        subtotal,
+      };
+    });
 
-    const fixedTotalAmount = fixedItems.reduce(
-      (sum, item) => sum + item.subtotal,
-      0,
-    );
-    const fixedTotalCost = fixedItems.reduce(
-      (sum, item) => sum + Number(item.costPrice) * item.quantity,
-      0,
-    );
-    const fixedTotalProfit = fixedTotalAmount - fixedTotalCost - discount;
+    const discount = Math.random() < 0.2 ? randomInt(5000, 20000) : 0;
+    totalAmount -= discount;
+    const totalProfit = totalAmount - totalCost;
 
-    orderPromises.push(
-      prisma.order.create({
-        data: {
-          customerName: customer.name,
-          phone: customer.phone,
-          address: customer.address || "Tự đến lấy",
-          deliveryTime,
-          status,
-          totalAmount: fixedTotalAmount,
-          totalCost: fixedTotalCost,
-          totalProfit: fixedTotalProfit,
-          discount,
-          note:
-            Math.random() > 0.7
-              ? randomItem([
-                  "Giao trước 12h",
-                  "Gọi trước khi giao",
-                  "Để ở bảo vệ",
-                  "Không cần đũa",
-                  "Thêm ớt",
-                  "Ít nước mắm",
-                ])
-              : null,
-          createdById: user.id,
-          customerId: customer.id,
-          createdAt: orderDate,
-          items: {
-            create: fixedItems,
-          },
+    const order = await prisma.order.create({
+      data: {
+        customerName: customer.name,
+        phone: customer.phone,
+        address: customer.address,
+        deliveryTime: deliveryDate,
+        status,
+        totalAmount,
+        totalCost,
+        totalProfit,
+        discount,
+        createdById: randomItem(users).id,
+        customerId: customer.id,
+        createdAt: orderDate,
+        items: {
+          create: orderItems,
         },
-      }),
-    );
+      },
+    });
+
+    orderCount++;
   }
-
-  const orders = await Promise.all(orderPromises);
-  console.log(`   ✅ Created ${orders.length} orders`);
-
-  // ============================================
-  // INVENTORY IMPORTS
-  // ============================================
-  console.log("📥 Creating inventory imports...");
-
-  const importPromises = [];
-  for (const variant of allVariants) {
-    // Create 2-4 imports per variant in last 30 days
-    const numImports = randomInt(2, 4);
-    for (let i = 0; i < numImports; i++) {
-      const importDate = randomDate(thirtyDaysAgo, now);
-      importPromises.push(
-        prisma.inventoryImport.create({
-          data: {
-            quantity: randomInt(10, 50),
-            importPrice: variant.costPrice,
-            importDate,
-            productVariantId: variant.id,
-            createdById: randomItem(users).id,
-          },
-        }),
-      );
-    }
-  }
-
-  const imports = await Promise.all(importPromises);
-  console.log(`   ✅ Created ${imports.length} inventory imports`);
-
-  // ============================================
-  // SUMMARY
-  // ============================================
-  console.log("\n✨ Seeding completed!");
-  console.log("─".repeat(40));
-  console.log(`   Users: ${users.length}`);
-  console.log(`   Categories: ${categories.length}`);
-  console.log(`   Products: ${allProducts.length}`);
-  console.log(`   Product Variants: ${allVariants.length}`);
-  console.log(`   Customers: ${customers.length}`);
-  console.log(`   Orders: ${orders.length}`);
-  console.log(`   Inventory Imports: ${imports.length}`);
-  console.log("─".repeat(40));
-  console.log("\n📝 Login credentials:");
-  console.log("   Admin: admin@hongvan.com / admin123");
-  console.log("   Staff: mai@hongvan.com / staff123");
-  console.log("   Staff: hung@hongvan.com / staff123");
+  console.log(`   ✅ Created ${orderCount} orders`);
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Seed error:", e);
-    process.exit(1);
-  })
-  .finally(async () => {
+  .then(async () => {
+    console.log("\n🎉 Seeding completed successfully!");
     await prisma.$disconnect();
+  })
+  .catch(async (e) => {
+    console.error("❌ Seeding failed:", e);
+    await prisma.$disconnect();
+    process.exit(1);
   });

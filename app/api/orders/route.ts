@@ -57,6 +57,20 @@ import { ApiException } from "@/modules/common/api-error";
  *           type: string
  *           format: date-time
  *         description: Filter orders to this date
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [createdAt, deliveryTime, totalAmount, customerName]
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
  *     responses:
  *       200:
  *         description: List of orders
@@ -73,6 +87,8 @@ export const GET = withAuth(async (req: NextRequest) => {
       status: searchParams.get("status") || undefined,
       from: searchParams.get("from") || undefined,
       to: searchParams.get("to") || undefined,
+      sortBy: searchParams.get("sortBy") || undefined,
+      sortOrder: searchParams.get("sortOrder") || undefined,
     });
 
     const result = await orderService.findAll(query);

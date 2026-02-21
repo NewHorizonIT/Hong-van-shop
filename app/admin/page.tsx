@@ -1,11 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
 import { AnalyticsCharts } from "@/components/common/analytics-chart";
 import { KPICards } from "@/components/common/kpi-card";
 import { getDateRange } from "@/hooks/api/use-reports";
 
 export default function AdminPage() {
-  const weekRange = getDateRange("week");
+  const weekRange = useMemo(() => getDateRange("week"), []);
 
   return (
     <div className="p-6">

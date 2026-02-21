@@ -94,26 +94,88 @@ export function useDailyRevenueReport(params: ReportParams | null) {
 }
 
 // Helper to get date range for common periods
+// Converts local time boundaries to UTC for server queries
 export function getDateRange(period: "today" | "week" | "month" | "year") {
   const now = new Date();
-  const to = now.toISOString();
-  let from: Date;
+
+  let fromLocal: Date;
+  let toLocal: Date;
 
   switch (period) {
     case "today":
-      from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      // Start of today in local timezone
+      fromLocal = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      // End of today in local timezone
+      toLocal = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999,
+      );
       break;
-    case "week":
-      from = new Date(now);
-      from.setDate(from.getDate() - 7);
+    case "week": {
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      fromLocal = new Date(
+        weekAgo.getFullYear(),
+        weekAgo.getMonth(),
+        weekAgo.getDate(),
+        0,
+        0,
+        0,
+        0,
+      );
+      toLocal = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999,
+      );
       break;
+    }
     case "month":
-      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      fromLocal = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      toLocal = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999,
+      );
       break;
     case "year":
-      from = new Date(now.getFullYear(), 0, 1);
+      fromLocal = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+      toLocal = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate(),
+        23,
+        59,
+        59,
+        999,
+      );
       break;
   }
 
-  return { from: from.toISOString(), to };
+  // Convert to ISO strings (automatically converts to UTC)
+  return {
+    from: fromLocal.toISOString(),
+    to: toLocal.toISOString(),
+  };
 }

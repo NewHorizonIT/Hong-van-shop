@@ -42,9 +42,13 @@ const noAuthRetryConfig: SWRConfiguration = {
 // ============ Products ============
 
 export function useProducts(categoryId?: string) {
-  const query = categoryId
-    ? `?categoryId=${categoryId}&limit=100`
-    : "?limit=100";
+  const params = new URLSearchParams();
+  params.set("limit", "100");
+  params.set("isActive", "true");
+  if (categoryId) {
+    params.set("categoryId", categoryId);
+  }
+  const query = `?${params.toString()}`;
   const { data, ...rest } = useSWR<ProductListResponse>(
     `/products${query}`,
     fetcher,

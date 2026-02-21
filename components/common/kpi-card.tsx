@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShoppingCart, TrendingUp, Clock, Zap } from "lucide-react";
@@ -11,7 +12,7 @@ import {
 import { useUpcomingOrders } from "@/hooks/api/use-orders";
 
 export function KPICards() {
-  const todayRange = getDateRange("today");
+  const todayRange = useMemo(() => getDateRange("today"), []);
 
   const { data: revenueData, isLoading: revenueLoading } =
     useRevenueReport(todayRange);

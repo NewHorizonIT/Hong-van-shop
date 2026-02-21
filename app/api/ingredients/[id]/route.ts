@@ -1,26 +1,60 @@
 import { NextRequest } from "next/server";
 import { ZodError } from "zod";
-import { productService, updateVariantSchema } from "@/modules/product";
+import { ingredientService, updateIngredientSchema } from "@/modules/ingredient";
 import { apiSuccess, apiError, ApiErrors, withAuth } from "@/modules/common";
 import { ApiException } from "@/modules/common/api-error";
 
 /**
  * @swagger
- * /api/products/{productId}/variants/{id}:
- *   patch:
+ * /api/ingredients/{id}:
+ *   get:
  *     tags:
- *       - Products
- *     summary: Update variant
+ *       - Ingredients
+ *     summary: Get ingredient by ID
  *     security:
  *       - bearerAuth: []
  *       - cookieAuth: []
  *     parameters:
  *       - in: path
- *         name: productId
+ *         name: id
  *         required: true
  *         schema:
  *           type: string
  *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Ingredient details
+ *       404:
+ *         description: Ingredient not found
+ */
+export const GET = withAuth(
+  async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
+    try {
+      const { id } = await context.params;
+      const ingredient = await ingredientService.findById(id);
+      return apiSuccess(ingredient);
+    } catch (error) {
+      if (error instanceof ApiException) {
+        return apiError(error.code, error.message, error.statusCode);
+      }
+
+      console.error("Get ingredient error:", error);
+      return ApiErrors.INTERNAL_ERROR();
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/ingredients/{id}:
+ *   patch:
+ *     tags:
+ *       - Ingredients
+ *     summary: Update ingredient
+ *     security:
+ *       - bearerAuth: []
+ *       - cookieAuth: []
+ *     parameters:
  *       - in: path
  *         name: id
  *         required: true
@@ -37,28 +71,23 @@ import { ApiException } from "@/modules/common/api-error";
  *                 type: string
  *               unit:
  *                 type: string
- *               sellingPrice:
- *                 type: number
  *               isActive:
  *                 type: boolean
  *     responses:
  *       200:
- *         description: Variant updated
+ *         description: Ingredient updated
  *       404:
- *         description: Variant not found
+ *         description: Ingredient not found
  */
 export const PATCH = withAuth(
-  async (
-    req: NextRequest,
-    context: { params: Promise<{ productId: string; id: string }> },
-  ) => {
+  async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
     try {
       const { id } = await context.params;
       const body = await req.json();
-      const input = updateVariantSchema.parse(body);
+      const input = updateIngredientSchema.parse(body);
 
-      const variant = await productService.updateVariant(id, input);
-      return apiSuccess(variant);
+      const ingredient = await ingredientService.update(id, input);
+      return apiSuccess(ingredient);
     } catch (error) {
       if (error instanceof ZodError) {
         const message = error.issues.map((e) => e.message).join(", ");
@@ -69,30 +98,24 @@ export const PATCH = withAuth(
         return apiError(error.code, error.message, error.statusCode);
       }
 
-      console.error("Update variant error:", error);
+      console.error("Update ingredient error:", error);
       return ApiErrors.INTERNAL_ERROR();
     }
   },
-  { roles: ["ADMIN"] },
+  { roles: ["ADMIN"] }
 );
 
 /**
  * @swagger
- * /api/products/{productId}/variants/{id}:
+ * /api/ingredients/{id}:
  *   delete:
  *     tags:
- *       - Products
- *     summary: Delete variant
+ *       - Ingredients
+ *     summary: Delete ingredient
  *     security:
  *       - bearerAuth: []
  *       - cookieAuth: []
  *     parameters:
- *       - in: path
- *         name: productId
- *         required: true
- *         schema:
- *           type: string
- *           format: uuid
  *       - in: path
  *         name: id
  *         required: true
@@ -101,29 +124,26 @@ export const PATCH = withAuth(
  *           format: uuid
  *     responses:
  *       200:
- *         description: Variant deleted
+ *         description: Ingredient deleted
  *       400:
- *         description: Cannot delete - has orders
+ *         description: Cannot delete - has imports
  *       404:
- *         description: Variant not found
+ *         description: Ingredient not found
  */
 export const DELETE = withAuth(
-  async (
-    req: NextRequest,
-    context: { params: Promise<{ productId: string; id: string }> },
-  ) => {
+  async (req: NextRequest, context: { params: Promise<{ id: string }> }) => {
     try {
       const { id } = await context.params;
-      await productService.deleteVariant(id);
-      return apiSuccess({ message: "Variant deleted successfully" });
+      await ingredientService.delete(id);
+      return apiSuccess({ message: "Đã xóa nguyên liệu thành công" });
     } catch (error) {
       if (error instanceof ApiException) {
         return apiError(error.code, error.message, error.statusCode);
       }
 
-      console.error("Delete variant error:", error);
+      console.error("Delete ingredient error:", error);
       return ApiErrors.INTERNAL_ERROR();
     }
   },
-  { roles: ["ADMIN"] },
+  { roles: ["ADMIN"] }
 );

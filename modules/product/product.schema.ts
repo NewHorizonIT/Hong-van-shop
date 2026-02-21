@@ -3,17 +3,13 @@ import { z } from "zod";
 export const createVariantSchema = z.object({
   name: z.string().min(1, "Name is required").max(100),
   unit: z.string().min(1, "Unit is required").max(50).default("phần"),
-  costPrice: z.coerce.number().min(0, "Cost price must be positive"),
   sellingPrice: z.coerce.number().min(0, "Selling price must be positive"),
-  stockQuantity: z.coerce.number().int().min(0).default(0),
 });
 
 export const updateVariantSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   unit: z.string().min(1).max(50).optional(),
-  costPrice: z.coerce.number().min(0).optional(),
   sellingPrice: z.coerce.number().min(0).optional(),
-  stockQuantity: z.coerce.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
 });
 

@@ -2,17 +2,15 @@ import { Decimal } from "@/lib/generated/prisma/runtime/client";
 
 export interface InventoryImportResponse {
   id: string;
-  quantity: number;
-  importPrice: Decimal;
+  quantity: Decimal | number;
+  importPrice: Decimal | number;
+  totalPrice: Decimal | number;
   importDate: Date;
-  productVariant: {
+  note: string | null;
+  ingredient: {
     id: string;
     name: string;
     unit: string;
-    product: {
-      id: string;
-      name: string;
-    };
   };
   createdBy: {
     id: string;

@@ -5,12 +5,10 @@ import { Category } from "./category";
 export interface ProductVariant {
   id: string;
   name: string;
-  costPrice: number;
   sellingPrice: number;
-  stockQuantity: number;
   unit: string;
   isActive: boolean;
-  productId: string;
+  productId?: string;
   createdAt: string;
 }
 
@@ -42,17 +40,13 @@ export interface UpdateProductInput {
 
 export interface CreateVariantInput {
   name: string;
-  costPrice: number;
   sellingPrice: number;
-  stockQuantity?: number;
   unit?: string;
 }
 
 export interface UpdateVariantInput {
   name?: string;
-  costPrice?: number;
   sellingPrice?: number;
-  stockQuantity?: number;
   unit?: string;
   isActive?: boolean;
 }

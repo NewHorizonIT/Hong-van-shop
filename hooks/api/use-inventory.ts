@@ -11,7 +11,7 @@ import {
 } from "@/types/inventory";
 
 interface InventoryImportsParams {
-  productVariantId?: string;
+  ingredientId?: string;
   from?: string;
   to?: string;
   limit?: number;
@@ -20,8 +20,8 @@ interface InventoryImportsParams {
 function buildQuery(params?: InventoryImportsParams): string {
   const searchParams = new URLSearchParams();
   searchParams.set("limit", String(params?.limit || 100));
-  if (params?.productVariantId)
-    searchParams.set("productVariantId", params.productVariantId);
+  if (params?.ingredientId)
+    searchParams.set("ingredientId", params.ingredientId);
   if (params?.from) searchParams.set("from", params.from);
   if (params?.to) searchParams.set("to", params.to);
   return `?${searchParams.toString()}`;
@@ -74,13 +74,13 @@ export function useCreateInventoryImport() {
   return async (data: CreateInventoryImportInput) => {
     const result = await apiClient.post<InventoryImport>(
       "/inventory-imports",
-      data,
+      data
     );
-    // Revalidate inventory and product data
+    // Revalidate inventory and ingredient data
     mutate(
       (key: string) =>
         typeof key === "string" &&
-        (key.startsWith("/inventory-imports") || key.startsWith("/products")),
+        (key.startsWith("/inventory-imports") || key.startsWith("/ingredients"))
     );
     return result;
   };
@@ -92,12 +92,12 @@ export function useUpdateInventoryImport() {
   return async (id: string, data: UpdateInventoryImportInput) => {
     const result = await apiClient.patch<InventoryImport>(
       `/inventory-imports/${id}`,
-      data,
+      data
     );
     mutate(
       (key: string) =>
         typeof key === "string" &&
-        (key.startsWith("/inventory-imports") || key.startsWith("/products")),
+        (key.startsWith("/inventory-imports") || key.startsWith("/ingredients"))
     );
     return result;
   };
@@ -111,7 +111,7 @@ export function useDeleteInventoryImport() {
     mutate(
       (key: string) =>
         typeof key === "string" &&
-        (key.startsWith("/inventory-imports") || key.startsWith("/products")),
+        (key.startsWith("/inventory-imports") || key.startsWith("/ingredients"))
     );
   };
 }
@@ -126,7 +126,7 @@ export function useInventoryImportStats(from?: string, to?: string) {
   const { data, ...rest } = useSWR<InventoryImportListResponse>(
     `/inventory-imports?${params.toString()}`,
     fetcher,
-    noAuthRetryConfig,
+    noAuthRetryConfig
   );
 
   // Calculate stats from imports
@@ -138,8 +138,8 @@ export function useInventoryImportStats(from?: string, to?: string) {
 
   if (data?.imports) {
     data.imports.forEach((imp) => {
-      stats.totalQuantity += imp.quantity;
-      stats.totalCost += Number(imp.importPrice) * imp.quantity;
+      stats.totalQuantity += Number(imp.quantity);
+      stats.totalCost += Number(imp.totalPrice);
     });
   }
 

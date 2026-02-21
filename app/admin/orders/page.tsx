@@ -4,7 +4,14 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Download, Plus } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Download, Plus, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OrderDialog } from "@/components/common/order-dialog";
 import { OrdersTable } from "@/components/common/order-table";
@@ -28,12 +35,24 @@ const statusTabs: { value: OrderStatus | "all"; label: string }[] = [
   { value: "CANCELLED", label: "Đã hủy" },
 ];
 
+type SortByType = "createdAt" | "deliveryTime" | "totalAmount" | "customerName";
+type SortOrderType = "asc" | "desc";
+
+const sortOptions: { value: SortByType; label: string }[] = [
+  { value: "createdAt", label: "Ngày tạo" },
+  { value: "deliveryTime", label: "Ngày giao" },
+  { value: "totalAmount", label: "Tổng tiền" },
+  { value: "customerName", label: "Tên khách" },
+];
+
 export default function OrdersPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "all">(
     "all",
   );
+  const [sortBy, setSortBy] = useState<SortByType>("createdAt");
+  const [sortOrder, setSortOrder] = useState<SortOrderType>("desc");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -42,9 +61,11 @@ export default function OrdersPage() {
     data: orders,
     isLoading: ordersLoading,
     error: ordersError,
-  } = useOrders(
-    selectedStatus === "all" ? undefined : { status: selectedStatus },
-  );
+  } = useOrders({
+    status: selectedStatus === "all" ? undefined : selectedStatus,
+    sortBy,
+    sortOrder,
+  });
   const { data: products, isLoading: productsLoading } = useProducts();
 
   const createOrder = useCreateOrder();
@@ -174,6 +195,35 @@ export default function OrdersPage() {
             Tạo đơn hàng
           </Button>
         </div>
+      </div>
+
+      {/* Sort Controls */}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Sắp xếp:</span>
+        </div>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortByType)}>
+          <SelectTrigger className="w-[140px] h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as SortOrderType)}>
+          <SelectTrigger className="w-[120px] h-9">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="desc">Giảm dần</SelectItem>
+            <SelectItem value="asc">Tăng dần</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <Tabs

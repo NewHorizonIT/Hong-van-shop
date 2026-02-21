@@ -4,9 +4,7 @@ export interface ProductVariantResponse {
   id: string;
   name: string;
   unit: string;
-  costPrice: Decimal;
   sellingPrice: Decimal;
-  stockQuantity: number;
   isActive: boolean;
   createdAt: Date;
 }

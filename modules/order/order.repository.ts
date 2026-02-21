@@ -7,6 +7,8 @@ export interface OrderFilter {
   status?: OrderStatus;
   from?: Date;
   to?: Date;
+  sortBy?: "createdAt" | "deliveryTime" | "totalAmount" | "customerName";
+  sortOrder?: "asc" | "desc";
 }
 
 const orderSelect = {
@@ -79,7 +81,7 @@ export const orderRepository = {
       prisma.order.findMany({
         where,
         select: orderSelect,
-        orderBy: { createdAt: "desc" },
+        orderBy: { [filter.sortBy || "createdAt"]: filter.sortOrder || "desc" },
         skip: (page - 1) * limit,
         take: limit,
       }),
@@ -189,9 +191,7 @@ export const orderRepository = {
       where: { id: { in: variantIds } },
       select: {
         id: true,
-        costPrice: true,
         sellingPrice: true,
-        stockQuantity: true,
         isActive: true,
       },
     });

@@ -87,15 +87,8 @@ export const productService = {
       throw new NotFoundException("Product");
     }
 
-    // Check if product has orders
-    const hasOrders = await productRepository.hasProductOrders(id);
-    if (hasOrders) {
-      throw new ValidationException(
-        "Cannot delete product with existing orders. Deactivate it instead.",
-      );
-    }
-
-    await productRepository.delete(id);
+    // Soft delete - just deactivate the product
+    await productRepository.update(id, { isActive: false });
   },
 
   // Variant operations

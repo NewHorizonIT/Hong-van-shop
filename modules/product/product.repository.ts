@@ -43,9 +43,7 @@ export const productRepository = {
               id: true,
               name: true,
               unit: true,
-              costPrice: true,
               sellingPrice: true,
-              stockQuantity: true,
               isActive: true,
               productId: true,
               createdAt: true,
@@ -82,9 +80,7 @@ export const productRepository = {
             id: true,
             name: true,
             unit: true,
-            costPrice: true,
             sellingPrice: true,
-            stockQuantity: true,
             isActive: true,
             createdAt: true,
           },
@@ -112,9 +108,7 @@ export const productRepository = {
           create: data.variants.map((v) => ({
             name: v.name,
             unit: v.unit || "phần",
-            costPrice: v.costPrice,
             sellingPrice: v.sellingPrice,
-            stockQuantity: v.stockQuantity || 0,
             isActive: true,
           })),
         },
@@ -133,9 +127,7 @@ export const productRepository = {
             id: true,
             name: true,
             unit: true,
-            costPrice: true,
             sellingPrice: true,
-            stockQuantity: true,
             isActive: true,
             createdAt: true,
           },
@@ -172,9 +164,7 @@ export const productRepository = {
             id: true,
             name: true,
             unit: true,
-            costPrice: true,
             sellingPrice: true,
-            stockQuantity: true,
             isActive: true,
             createdAt: true,
           },
@@ -186,8 +176,14 @@ export const productRepository = {
   },
 
   async delete(id: string) {
-    return prisma.product.delete({
-      where: { id },
+    // Delete variants first, then delete product (in transaction)
+    return prisma.$transaction(async (tx) => {
+      await tx.productVariant.deleteMany({
+        where: { productId: id },
+      });
+      return tx.product.delete({
+        where: { id },
+      });
     });
   },
 
@@ -199,9 +195,7 @@ export const productRepository = {
         id: true,
         name: true,
         unit: true,
-        costPrice: true,
         sellingPrice: true,
-        stockQuantity: true,
         isActive: true,
         productId: true,
         createdAt: true,
@@ -215,18 +209,14 @@ export const productRepository = {
         productId,
         name: data.name,
         unit: data.unit || "phần",
-        costPrice: data.costPrice,
         sellingPrice: data.sellingPrice,
-        stockQuantity: data.stockQuantity || 0,
         isActive: true,
       },
       select: {
         id: true,
         name: true,
         unit: true,
-        costPrice: true,
         sellingPrice: true,
-        stockQuantity: true,
         isActive: true,
         createdAt: true,
       },
@@ -241,9 +231,7 @@ export const productRepository = {
         id: true,
         name: true,
         unit: true,
-        costPrice: true,
         sellingPrice: true,
-        stockQuantity: true,
         isActive: true,
         createdAt: true,
       },

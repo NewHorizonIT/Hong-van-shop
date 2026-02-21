@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/lib/generated/prisma";
 
 export interface InventoryImportFilter {
-  productVariantId?: string;
+  ingredientId?: string;
   from?: Date;
   to?: Date;
 }
@@ -11,15 +11,14 @@ const importSelect = {
   id: true,
   quantity: true,
   importPrice: true,
+  totalPrice: true,
   importDate: true,
-  productVariant: {
+  note: true,
+  ingredient: {
     select: {
       id: true,
       name: true,
       unit: true,
-      product: {
-        select: { id: true, name: true },
-      },
     },
   },
   createdBy: {
@@ -31,8 +30,8 @@ export const inventoryRepository = {
   async findAll(filter: InventoryImportFilter, page: number, limit: number) {
     const where: Prisma.InventoryImportWhereInput = {};
 
-    if (filter.productVariantId) {
-      where.productVariantId = filter.productVariantId;
+    if (filter.ingredientId) {
+      where.ingredientId = filter.ingredientId;
     }
 
     if (filter.from || filter.to) {
@@ -63,29 +62,34 @@ export const inventoryRepository = {
   },
 
   async create(data: {
-    productVariantId: string;
+    ingredientId: string;
     quantity: number;
     importPrice: number;
     importDate: Date;
+    note?: string;
     createdById: string;
   }) {
+    const totalPrice = data.quantity * data.importPrice;
+
     // Use transaction to update stock quantity
     return prisma.$transaction(async (tx) => {
       // Create import record
       const importRecord = await tx.inventoryImport.create({
         data: {
-          productVariantId: data.productVariantId,
+          ingredientId: data.ingredientId,
           quantity: data.quantity,
           importPrice: data.importPrice,
+          totalPrice: totalPrice,
           importDate: data.importDate,
+          note: data.note,
           createdById: data.createdById,
         },
         select: importSelect,
       });
 
-      // Update stock quantity
-      await tx.productVariant.update({
-        where: { id: data.productVariantId },
+      // Update ingredient stock quantity
+      await tx.ingredient.update({
+        where: { id: data.ingredientId },
         data: {
           stockQuantity: { increment: data.quantity },
         },
@@ -102,21 +106,30 @@ export const inventoryRepository = {
       quantity?: number;
       importPrice?: number;
       importDate?: Date;
-    },
+      note?: string;
+    }
   ) {
     return prisma.$transaction(async (tx) => {
       const importRecord = await tx.inventoryImport.findUnique({
         where: { id },
-        select: { productVariantId: true },
+        select: { ingredientId: true, importPrice: true },
       });
 
       if (!importRecord) return null;
 
+      // Calculate new total price if quantity or price changed
+      const updateData: Prisma.InventoryImportUpdateInput = { ...data };
+      if (data.quantity !== undefined || data.importPrice !== undefined) {
+        const newQuantity = data.quantity ?? oldQuantity;
+        const newPrice = data.importPrice ?? Number(importRecord.importPrice);
+        updateData.totalPrice = newQuantity * newPrice;
+      }
+
       // Update stock quantity if quantity changed
       if (data.quantity !== undefined && data.quantity !== oldQuantity) {
         const diff = data.quantity - oldQuantity;
-        await tx.productVariant.update({
-          where: { id: importRecord.productVariantId },
+        await tx.ingredient.update({
+          where: { id: importRecord.ingredientId },
           data: {
             stockQuantity: { increment: diff },
           },
@@ -125,13 +138,13 @@ export const inventoryRepository = {
 
       return tx.inventoryImport.update({
         where: { id },
-        data,
+        data: updateData,
         select: importSelect,
       });
     });
   },
 
-  async delete(id: string, quantity: number, productVariantId: string) {
+  async delete(id: string, quantity: number, ingredientId: string) {
     return prisma.$transaction(async (tx) => {
       // Delete import record
       await tx.inventoryImport.delete({
@@ -139,8 +152,8 @@ export const inventoryRepository = {
       });
 
       // Decrease stock quantity
-      await tx.productVariant.update({
-        where: { id: productVariantId },
+      await tx.ingredient.update({
+        where: { id: ingredientId },
         data: {
           stockQuantity: { decrement: quantity },
         },
@@ -148,10 +161,32 @@ export const inventoryRepository = {
     });
   },
 
-  async getVariant(id: string) {
-    return prisma.productVariant.findUnique({
+  async getIngredient(id: string) {
+    return prisma.ingredient.findUnique({
       where: { id },
       select: { id: true, isActive: true },
     });
+  },
+
+  async getStats(from?: Date, to?: Date) {
+    const where: Prisma.InventoryImportWhereInput = {};
+    if (from || to) {
+      where.importDate = {};
+      if (from) where.importDate.gte = from;
+      if (to) where.importDate.lte = to;
+    }
+
+    const result = await prisma.inventoryImport.aggregate({
+      where,
+      _sum: {
+        totalPrice: true,
+      },
+      _count: true,
+    });
+
+    return {
+      totalImports: result._count,
+      totalCost: result._sum.totalPrice ?? 0,
+    };
   },
 };

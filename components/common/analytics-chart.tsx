@@ -64,6 +64,8 @@ export function AnalyticsCharts({ period, dateRange }: AnalyticsChartsProps) {
         month: "2-digit",
       }),
       revenue: item.revenue,
+      cost: item.cost,
+      profit: item.profit,
       orders: item.orders,
     })) || [];
 
@@ -85,7 +87,9 @@ export function AnalyticsCharts({ period, dateRange }: AnalyticsChartsProps) {
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle>Xu hướng doanh thu</CardTitle>
-          <CardDescription>Doanh thu theo {periodLabel}</CardDescription>
+          <CardDescription>
+            Doanh thu, chi phí và lợi nhuận theo {periodLabel}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -104,21 +108,37 @@ export function AnalyticsCharts({ period, dateRange }: AnalyticsChartsProps) {
                     backgroundColor: "var(--card)",
                     border: `1px solid var(--border)`,
                   }}
-                  formatter={(value) => [
-                    new Intl.NumberFormat("vi-VN", {
+                  formatter={(value: number, name: string) => {
+                    const formatted = new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
-                    }).format(Number(value) || 0),
-                    "Doanh thu",
-                  ]}
+                    }).format(value || 0);
+                    return [formatted, name];
+                  }}
                 />
                 <Legend />
                 <Line
                   type="monotone"
                   dataKey="revenue"
                   name="Doanh thu"
-                  stroke="var(--primary)"
-                  dot={{ fill: "var(--primary)" }}
+                  stroke="#3b82f6"
+                  dot={{ fill: "#3b82f6" }}
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="cost"
+                  name="Chi phí nhập"
+                  stroke="#f97316"
+                  dot={{ fill: "#f97316" }}
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="profit"
+                  name="Lợi nhuận"
+                  stroke="#22c55e"
+                  dot={{ fill: "#22c55e" }}
                   strokeWidth={2}
                 />
               </LineChart>

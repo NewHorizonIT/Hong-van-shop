@@ -29,7 +29,6 @@ import { ApiException } from "@/modules/common/api-error";
  *             type: object
  *             required:
  *               - name
- *               - costPrice
  *               - sellingPrice
  *             properties:
  *               name:
@@ -38,15 +37,9 @@ import { ApiException } from "@/modules/common/api-error";
  *               unit:
  *                 type: string
  *                 example: con
- *               costPrice:
- *                 type: number
- *                 example: 60000
  *               sellingPrice:
  *                 type: number
  *                 example: 100000
- *               stockQuantity:
- *                 type: integer
- *                 example: 50
  *     responses:
  *       201:
  *         description: Variant created

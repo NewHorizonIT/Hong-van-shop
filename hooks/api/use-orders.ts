@@ -10,6 +10,8 @@ interface OrdersParams {
   status?: OrderStatus;
   from?: string;
   to?: string;
+  sortBy?: "createdAt" | "deliveryTime" | "totalAmount" | "customerName";
+  sortOrder?: "asc" | "desc";
 }
 
 // Response type from API (paginated)
@@ -32,6 +34,8 @@ function buildOrdersQuery(params?: OrdersParams): string {
   if (params?.status) searchParams.set("status", params.status);
   if (params?.from) searchParams.set("from", params.from);
   if (params?.to) searchParams.set("to", params.to);
+  if (params?.sortBy) searchParams.set("sortBy", params.sortBy);
+  if (params?.sortOrder) searchParams.set("sortOrder", params.sortOrder);
   return `?${searchParams.toString()}`;
 }
 

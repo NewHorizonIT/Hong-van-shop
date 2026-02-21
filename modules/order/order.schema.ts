@@ -33,6 +33,10 @@ export const orderQuerySchema = z.object({
   status: z.enum(["PENDING", "CONFIRMED", "DONE", "CANCELLED"]).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
+  sortBy: z
+    .enum(["createdAt", "deliveryTime", "totalAmount", "customerName"])
+    .default("createdAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
 export const upcomingOrdersSchema = z.object({
