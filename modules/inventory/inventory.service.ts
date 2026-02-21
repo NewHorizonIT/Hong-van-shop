@@ -59,14 +59,14 @@ export const inventoryService = {
       throw new ValidationException("Nguyên liệu đã bị ẩn");
     }
 
-    return inventoryRepository.create({
+    return (await inventoryRepository.create({
       ingredientId: input.ingredientId,
       quantity: input.quantity,
       importPrice: input.importPrice,
       importDate: input.importDate || new Date(),
       note: input.note,
       createdById,
-    });
+    })) as InventoryImportResponse;
   },
 
   async update(
@@ -87,12 +87,12 @@ export const inventoryService = {
       throw new NotFoundException("Phiếu nhập");
     }
 
-    return result;
+    return result as InventoryImportResponse;
   },
 
   async delete(id: string): Promise<void> {
     const existing = await inventoryRepository.findById(id);
-    if (!existing) {
+    if (!existing || !existing.ingredient) {
       throw new NotFoundException("Phiếu nhập");
     }
 
