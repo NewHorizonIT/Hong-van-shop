@@ -52,9 +52,11 @@ export const inventoryRepository = {
     ]);
 
     // Filter out imports with null ingredients
-    const filteredImports = imports.filter((imp) => imp.ingredient !== null);
+    const filteredImports = imports.filter(
+      (imp) => imp.ingredient !== null,
+    ) as any[];
 
-    return { imports: filteredImports, total };
+    return { imports: filteredImports, total } as any;
   },
 
   async findById(id: string) {

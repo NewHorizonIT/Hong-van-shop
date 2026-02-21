@@ -26,7 +26,7 @@ export const inventoryService = {
     );
 
     return {
-      imports,
+      imports: imports as any,
       total,
       page,
       limit,
