@@ -107,7 +107,7 @@ export const inventoryRepository = {
       importPrice?: number;
       importDate?: Date;
       note?: string;
-    }
+    },
   ) {
     return prisma.$transaction(async (tx) => {
       const importRecord = await tx.inventoryImport.findUnique({
@@ -127,6 +127,9 @@ export const inventoryRepository = {
 
       // Update stock quantity if quantity changed
       if (data.quantity !== undefined && data.quantity !== oldQuantity) {
+        if (!importRecord.ingredientId) {
+          throw new Error("Cannot update stock: ingredient not found");
+        }
         const diff = data.quantity - oldQuantity;
         await tx.ingredient.update({
           where: { id: importRecord.ingredientId },
