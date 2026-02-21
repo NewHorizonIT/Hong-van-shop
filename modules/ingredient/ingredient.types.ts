@@ -1,4 +1,4 @@
-import { Decimal } from "@/lib/generated/prisma/runtime/library";
+import { Decimal } from "@/lib/generated/prisma/runtime/client";
 
 export interface Ingredient {
   id: string;

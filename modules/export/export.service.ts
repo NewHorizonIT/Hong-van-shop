@@ -281,8 +281,6 @@ class ExportService {
           "Biến thể": v.name,
           "Đơn vị": v.unit,
           "Giá bán": v.sellingPrice.toNumber(),
-          "Giá nhập": v.costPrice.toNumber(),
-          "Tồn kho": v.stockQuantity,
           "Trạng thái": v.isActive ? "Hoạt động" : "Ẩn",
         });
       });
@@ -295,8 +293,6 @@ class ExportService {
         { wch: 15 },
         { wch: 10 },
         { wch: 12 },
-        { wch: 12 },
-        { wch: 10 },
         { wch: 12 },
       ];
       XLSX.utils.book_append_sheet(workbook, variantsSheet, "Biến thể");
@@ -312,9 +308,7 @@ class ExportService {
         importDate: { gte: from, lte: to },
       },
       include: {
-        productVariant: {
-          include: { product: true },
-        },
+        ingredient: true,
         createdBy: {
           select: { name: true },
         },
@@ -325,20 +319,18 @@ class ExportService {
     const workbook = XLSX.utils.book_new();
 
     const importsData = imports.map((imp) => ({
-      "Sản phẩm": imp.productVariant.product.name,
-      "Biến thể": imp.productVariant.name,
-      "Đơn vị": imp.productVariant.unit,
-      "Số lượng": imp.quantity,
+      "Nguyên liệu": imp.ingredient.name,
+      "Đơn vị": imp.ingredient.unit,
+      "Số lượng": Number(imp.quantity),
       "Giá nhập": imp.importPrice.toNumber(),
-      "Thành tiền": imp.quantity * imp.importPrice.toNumber(),
+      "Thành tiền": Number(imp.totalPrice),
       "Ngày nhập": new Date(imp.importDate).toLocaleDateString("vi-VN"),
       "Người nhập": imp.createdBy?.name || "",
     }));
 
     const sheet = XLSX.utils.json_to_sheet(importsData);
     sheet["!cols"] = [
-      { wch: 25 },
-      { wch: 15 },
+      { wch: 20 },
       { wch: 10 },
       { wch: 10 },
       { wch: 12 },
@@ -350,7 +342,7 @@ class ExportService {
 
     // Summary
     const totalCost = imports.reduce(
-      (sum, imp) => sum + imp.quantity * imp.importPrice.toNumber(),
+      (sum, imp) => sum + Number(imp.totalPrice),
       0,
     );
     const summaryData = [

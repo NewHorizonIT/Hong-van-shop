@@ -108,13 +108,12 @@ export function AnalyticsCharts({ period, dateRange }: AnalyticsChartsProps) {
                     backgroundColor: "var(--card)",
                     border: `1px solid var(--border)`,
                   }}
-                  formatter={(value: number, name: string) => {
-                    const formatted = new Intl.NumberFormat("vi-VN", {
+                  formatter={(value: number | undefined) => [
+                    new Intl.NumberFormat("vi-VN", {
                       style: "currency",
                       currency: "VND",
-                    }).format(value || 0);
-                    return [formatted, name];
-                  }}
+                    }).format(Number(value) || 0),
+                  ]}
                 />
                 <Legend />
                 <Line

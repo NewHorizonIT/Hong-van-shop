@@ -43,13 +43,12 @@ class ReportRepository {
         importDate: { gte: from, lte: to },
       },
       select: {
-        quantity: true,
-        importPrice: true,
+        totalPrice: true,
       },
     });
 
     const totalImportCost = imports.reduce(
-      (sum, imp) => sum + imp.quantity * imp.importPrice.toNumber(),
+      (sum, imp) => sum + imp.totalPrice.toNumber(),
       0,
     );
 
