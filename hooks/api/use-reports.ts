@@ -174,6 +174,8 @@ export function getDateRange(period: "today" | "week" | "month" | "year") {
   }
 
   // Convert to ISO strings (automatically converts to UTC)
+  // The Date constructor with (year, month, date, ...) interprets as local time
+  // toISOString() then converts to UTC representation
   return {
     from: fromLocal.toISOString(),
     to: toLocal.toISOString(),

@@ -52,7 +52,7 @@ import { Plus, Trash2, Package, DollarSign, TrendingUp } from "lucide-react";
 export default function InventoryImportsPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [deleteImport, setDeleteImport] = useState<InventoryImport | null>(
-    null
+    null,
   );
   const [selectedIngredientId, setSelectedIngredientId] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -373,18 +373,26 @@ export default function InventoryImportsPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="importPrice">Giá nhập (VNĐ)</Label>
-                <Input
-                  id="importPrice"
-                  type="number"
-                  min={0}
-                  value={formData.importPrice}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      importPrice: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                />
+                <div className="relative">
+                  <Input
+                    id="importPrice"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="50.000"
+                    value={formData.importPrice}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        importPrice: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="pr-10"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                    VNĐ
+                  </span>
+                </div>
               </div>
             </div>
 

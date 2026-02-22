@@ -69,7 +69,7 @@ class ExportService {
           "Sản phẩm": item.productVariant.product.name,
           "Biến thể": item.productVariant.name,
           "Đơn vị": item.productVariant.unit,
-          "Số lượng": item.quantity,
+          "Số lượng": item.quantity.toNumber(),
           "Đơn giá": item.unitPrice.toNumber(),
           "Thành tiền": item.subtotal.toNumber(),
         });

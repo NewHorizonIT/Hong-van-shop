@@ -3,10 +3,19 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ShoppingCart, TrendingUp, Clock, Zap } from "lucide-react";
+import {
+  ShoppingCart,
+  TrendingUp,
+  Clock,
+  Zap,
+  Wallet,
+  Receipt,
+} from "lucide-react";
 import {
   useRevenueReport,
   useOrdersStatsReport,
+  useProfitReport,
+  useCostsReport,
   getDateRange,
 } from "@/hooks/api/use-reports";
 import { useUpcomingOrders } from "@/hooks/api/use-orders";
@@ -20,6 +29,10 @@ export function KPICards() {
     useOrdersStatsReport(todayRange);
   const { data: upcomingOrders, isLoading: upcomingLoading } =
     useUpcomingOrders(2);
+  const { data: profitData, isLoading: profitLoading } =
+    useProfitReport(todayRange);
+  const { data: costsData, isLoading: costsLoading } =
+    useCostsReport(todayRange);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -54,6 +67,28 @@ export function KPICards() {
       isLoading: revenueLoading,
     },
     {
+      title: "Lợi nhuận hôm nay",
+      value: profitData ? formatPrice(profitData.grossProfit) : "0₫",
+      change: profitData
+        ? `Doanh thu: ${formatPrice(profitData.totalRevenue)}`
+        : "Chưa có dữ liệu",
+      icon: Wallet,
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-50",
+      isLoading: profitLoading,
+    },
+    {
+      title: "Chi phí nhập hôm nay",
+      value: costsData ? formatPrice(costsData.totalImportCost) : "0₫",
+      change: costsData
+        ? `${costsData.totalImports} lần nhập hàng`
+        : "Chưa có dữ liệu",
+      icon: Receipt,
+      color: "text-red-500",
+      bgColor: "bg-red-50",
+      isLoading: costsLoading,
+    },
+    {
       title: "Đơn hàng đang xử lý",
       value: processingCount.toString(),
       change: ordersStats?.pendingOrders
@@ -79,7 +114,7 @@ export function KPICards() {
   ];
 
   return (
-    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mb-6">
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-6">
       {kpis.map((kpi, idx) => {
         const Icon = kpi.icon;
         return (

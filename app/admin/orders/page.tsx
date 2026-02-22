@@ -39,8 +39,8 @@ type SortByType = "createdAt" | "deliveryTime" | "totalAmount" | "customerName";
 type SortOrderType = "asc" | "desc";
 
 const sortOptions: { value: SortByType; label: string }[] = [
+  { value: "deliveryTime", label: "Thời gian giao" },
   { value: "createdAt", label: "Ngày tạo" },
-  { value: "deliveryTime", label: "Ngày giao" },
   { value: "totalAmount", label: "Tổng tiền" },
   { value: "customerName", label: "Tên khách" },
 ];
@@ -51,8 +51,8 @@ export default function OrdersPage() {
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | "all">(
     "all",
   );
-  const [sortBy, setSortBy] = useState<SortByType>("createdAt");
-  const [sortOrder, setSortOrder] = useState<SortOrderType>("desc");
+  const [sortBy, setSortBy] = useState<SortByType>("deliveryTime");
+  const [sortOrder, setSortOrder] = useState<SortOrderType>("asc");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -203,7 +203,10 @@ export default function OrdersPage() {
           <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">Sắp xếp:</span>
         </div>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortByType)}>
+        <Select
+          value={sortBy}
+          onValueChange={(v) => setSortBy(v as SortByType)}
+        >
           <SelectTrigger className="w-[140px] h-9">
             <SelectValue />
           </SelectTrigger>
@@ -215,7 +218,10 @@ export default function OrdersPage() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as SortOrderType)}>
+        <Select
+          value={sortOrder}
+          onValueChange={(v) => setSortOrder(v as SortOrderType)}
+        >
           <SelectTrigger className="w-[120px] h-9">
             <SelectValue />
           </SelectTrigger>

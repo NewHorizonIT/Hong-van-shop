@@ -53,11 +53,11 @@ export function OrdersTable({
 }: OrdersTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | string) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(price);
+    }).format(Number(price));
   };
 
   const formatDateTime = (dateStr: string) => {

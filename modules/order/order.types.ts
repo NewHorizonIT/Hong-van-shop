@@ -3,7 +3,7 @@ import { OrderStatus } from "@/lib/generated/prisma";
 
 export interface OrderItemResponse {
   id: string;
-  quantity: number;
+  quantity: Decimal;
   unitPrice: Decimal;
   costPrice: Decimal;
   subtotal: Decimal;
@@ -11,6 +11,7 @@ export interface OrderItemResponse {
     id: string;
     name: string;
     unit: string;
+    productId: string;
     product: {
       id: string;
       name: string;

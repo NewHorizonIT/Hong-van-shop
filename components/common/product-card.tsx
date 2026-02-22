@@ -31,20 +31,20 @@ export default function ProductCard({
   onDelete,
   onToggleStatus,
 }: ProductCardProps) {
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | string) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(price);
+    }).format(Number(price));
   };
 
   const isActive = product.isActive ?? true;
-  
+
   // Get the min price from variants or 0
-  const minPrice = product.variants?.length 
-    ? Math.min(...product.variants.map(v => v.sellingPrice))
+  const minPrice = product.variants?.length
+    ? Math.min(...product.variants.map((v) => Number(v.sellingPrice)))
     : 0;
-  
+
   // Get the default unit from first variant
   const displayUnit = product.variants?.[0]?.unit || "con";
 
@@ -89,7 +89,9 @@ export default function ProductCard({
             {minPrice > 0 ? formatPrice(minPrice) : "Chưa có giá"}
           </span>
           {minPrice > 0 && (
-            <span className="text-sm text-muted-foreground">/{displayUnit}</span>
+            <span className="text-sm text-muted-foreground">
+              /{displayUnit}
+            </span>
           )}
         </div>
 
@@ -102,8 +104,8 @@ export default function ProductCard({
                 <span
                   key={variant.id}
                   className={`text-xs px-2 py-0.5 rounded font-medium ${
-                    variant.isActive 
-                      ? "bg-secondary" 
+                    variant.isActive
+                      ? "bg-secondary"
                       : "bg-gray-200 text-gray-500 line-through"
                   }`}
                 >
@@ -115,7 +117,9 @@ export default function ProductCard({
         )}
 
         {/* Product ID */}
-        <div className="text-xs text-muted-foreground">ID: {product.id.slice(0, 8)}...</div>
+        <div className="text-xs text-muted-foreground">
+          ID: {product.id.slice(0, 8)}...
+        </div>
       </CardContent>
 
       <CardFooter className="flex gap-2">

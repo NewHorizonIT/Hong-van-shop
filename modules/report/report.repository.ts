@@ -195,9 +195,13 @@ class ReportRepository {
       const key = v.id;
       const existing = variantMap.get(key);
       const revenue = item.subtotal.toNumber();
+      const qty =
+        typeof item.quantity === "object" && "toNumber" in item.quantity
+          ? (item.quantity as { toNumber: () => number }).toNumber()
+          : Number(item.quantity);
 
       if (existing) {
-        existing.totalQuantity += item.quantity;
+        existing.totalQuantity += qty;
         existing.totalRevenue += revenue;
       } else {
         variantMap.set(key, {
@@ -206,7 +210,7 @@ class ReportRepository {
           variantId: v.id,
           variantName: v.name,
           variantUnit: v.unit,
-          totalQuantity: item.quantity,
+          totalQuantity: qty,
           totalRevenue: revenue,
         });
       }
