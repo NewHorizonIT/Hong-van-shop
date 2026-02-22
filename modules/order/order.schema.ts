@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const orderItemSchema = z.object({
   productVariantId: z.string().uuid("Invalid product variant ID"),
-  quantity: z.coerce.number().int().min(1, "Quantity must be at least 1"),
+  quantity: z.coerce.number().min(0.001, "Quantity must be greater than 0"),
 });
 
 export const createOrderSchema = z.object({

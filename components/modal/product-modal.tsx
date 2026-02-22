@@ -332,16 +332,27 @@ export default function ProductModal({
                   <label className="text-xs text-muted-foreground">
                     Giá bán <span className="text-destructive">*</span>
                   </label>
-                  <Input
-                    type="number"
-                    placeholder="250000"
-                    value={variant.sellingPrice}
-                    onChange={(e) =>
-                      handleVariantChange(index, "sellingPrice", e.target.value)
-                    }
-                    className="h-8 text-sm"
-                    aria-invalid={!!errors[`variant_${index}_sellingPrice`]}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      placeholder="250.000"
+                      min={0}
+                      step="0.01"
+                      value={variant.sellingPrice}
+                      onChange={(e) =>
+                        handleVariantChange(
+                          index,
+                          "sellingPrice",
+                          e.target.value,
+                        )
+                      }
+                      className="h-8 text-sm pr-10"
+                      aria-invalid={!!errors[`variant_${index}_sellingPrice`]}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                      VNĐ
+                    </span>
+                  </div>
                   {errors[`variant_${index}_sellingPrice`] && (
                     <p className="text-xs text-destructive">
                       {errors[`variant_${index}_sellingPrice`]}

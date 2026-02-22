@@ -76,6 +76,17 @@ export function OrderDialog({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Convert UTC date to local datetime-local format (YYYY-MM-DDTHH:mm)
+  const formatDateTimeLocal = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     if (open) {
       if (editingOrder) {
@@ -84,7 +95,7 @@ export function OrderDialog({
           phone: editingOrder.phone,
           address: editingOrder.address,
           deliveryTime: editingOrder.deliveryTime
-            ? new Date(editingOrder.deliveryTime).toISOString().slice(0, 16)
+            ? formatDateTimeLocal(editingOrder.deliveryTime)
             : "",
           status: editingOrder.status,
           note: editingOrder.note || "",
@@ -122,6 +133,12 @@ export function OrderDialog({
   const getVariantsForProduct = (productId: string) => {
     const product = products.find((p) => p.id === productId);
     return product?.variants || [];
+  };
+
+  const getSelectedVariant = (productVariantId: string) => {
+    return products
+      .flatMap((p) => p.variants || [])
+      .find((v) => v.id === productVariantId);
   };
 
   const handleItemChange = (
@@ -221,11 +238,11 @@ export function OrderDialog({
     }
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | string) => {
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
-    }).format(price);
+    }).format(Number(price));
   };
 
   // Calculate total
@@ -233,8 +250,8 @@ export function OrderDialog({
     if (editingOrder) {
       // For editing, use the original subtotal (totalAmount + original discount) minus current discount
       const originalSubtotal =
-        editingOrder.totalAmount + (editingOrder.discount || 0);
-      return Math.max(0, originalSubtotal - (formData.discount || 0));
+        Number(editingOrder.totalAmount) + Number(editingOrder.discount || 0);
+      return Math.max(0, originalSubtotal - Number(formData.discount || 0));
     }
 
     // For new orders, calculate from selected items
@@ -245,11 +262,11 @@ export function OrderDialog({
           .flatMap((p) => p.variants || [])
           .find((v) => v.id === item.productVariantId);
         if (variant) {
-          total += variant.sellingPrice * item.quantity;
+          total += Number(variant.sellingPrice) * Number(item.quantity);
         }
       }
     });
-    return Math.max(0, total - (formData.discount || 0));
+    return Math.max(0, total - Number(formData.discount || 0));
   };
 
   return (
@@ -409,7 +426,13 @@ export function OrderDialog({
                     </div>
                     <div className="text-right">
                       <span className="text-muted-foreground">
-                        x{item.quantity}
+                        x
+                        {Number(item.quantity).toLocaleString("vi-VN", {
+                          maximumFractionDigits: 3,
+                        })}
+                        {item.productVariant?.unit
+                          ? ` ${item.productVariant.unit}`
+                          : ""}
                       </span>
                       <span className="ml-2 font-medium">
                         {formatPrice(item.subtotal)}
@@ -475,17 +498,22 @@ export function OrderDialog({
                     </Select>
                   </div>
 
-                  <div className="w-20 space-y-1">
-                    <Label className="text-xs text-muted-foreground">SL</Label>
+                  <div className="w-24 space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      SL{" "}
+                      {item.productVariantId &&
+                        `(${getSelectedVariant(item.productVariantId)?.unit || "phần"})`}
+                    </Label>
                     <Input
                       type="number"
-                      min={1}
+                      min={0.1}
+                      step={0.1}
                       value={item.quantity}
                       onChange={(e) =>
                         handleItemChange(
                           index,
                           "quantity",
-                          parseInt(e.target.value) || 1,
+                          parseFloat(e.target.value) || 0.001,
                         )
                       }
                     />

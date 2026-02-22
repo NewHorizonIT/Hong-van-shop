@@ -197,7 +197,7 @@ model Order {
 
 model OrderItem {
   id                String   @id @default(uuid())
-  quantity          Int
+  quantity          Decimal  @db.Decimal(12,3)
 
   unitPrice         Decimal  @db.Decimal(12,2) @map("unit_price")
   costPrice         Decimal  @db.Decimal(12,2) @map("cost_price")
